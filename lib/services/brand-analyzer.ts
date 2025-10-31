@@ -61,7 +61,7 @@ export class BrandAnalyzer {
         await prisma.source.create({
           data: {
             projectId,
-            type: page.type,
+            type: page.type as any,
             url: page.url,
             contentHash: webScraper.calculateHash(page.content),
             textExcerpt: page.excerpt,
