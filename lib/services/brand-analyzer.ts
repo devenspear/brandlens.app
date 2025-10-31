@@ -307,7 +307,7 @@ export class BrandAnalyzer {
       case LlmProvider.OPENAI:
         return 'gpt-4o';
       case LlmProvider.ANTHROPIC:
-        return 'claude-3-5-sonnet-20241022';
+        return 'claude-3-5-sonnet-20240620';
       case LlmProvider.GOOGLE:
         return 'gemini-1.5-pro';
       default:
