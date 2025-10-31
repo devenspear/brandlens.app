@@ -7,6 +7,7 @@ import { ThemeToggle } from '@/components/shared/theme-toggle';
 export default function Home() {
   const router = useRouter();
   const [url, setUrl] = useState('');
+  const [email, setEmail] = useState('');
   const [region, setRegion] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -17,10 +18,16 @@ export default function Home() {
     setLoading(true);
 
     try {
+      // Normalize URL - add https:// if no protocol is present
+      let normalizedUrl = url.trim();
+      if (!/^https?:\/\//i.test(normalizedUrl)) {
+        normalizedUrl = `https://${normalizedUrl}`;
+      }
+
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url, region: region || undefined }),
+        body: JSON.stringify({ url: normalizedUrl, email, region: region || undefined }),
       });
 
       if (!response.ok) {
@@ -69,14 +76,35 @@ export default function Home() {
                 Website URL *
               </label>
               <input
-                type="url"
+                type="text"
                 id="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://example-community.com"
+                placeholder="example-community.com"
                 required
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+            </div>
+
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Email Address *
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                We'll email you the completed Brand Read report
+              </p>
             </div>
 
             <div>
@@ -104,7 +132,7 @@ export default function Home() {
 
             <button
               type="submit"
-              disabled={loading || !url}
+              disabled={loading || !url || !email}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
               {loading ? 'Analyzing...' : 'Generate Your AI Brand Read'}

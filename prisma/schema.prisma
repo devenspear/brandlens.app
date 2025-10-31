@@ -13,6 +13,7 @@ datasource db {
 model Project {
   id          String   @id @default(cuid())
   url         String
+  email       String
   region      String?
   createdBy   String?
   status      ProjectStatus @default(PENDING)
@@ -28,6 +29,7 @@ model Project {
 
   @@index([status])
   @@index([createdAt])
+  @@index([email])
 }
 
 model Source {

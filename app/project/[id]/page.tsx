@@ -114,27 +114,66 @@ export default function ProjectStatusPage() {
           </div>
 
           {error ? (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
-              <svg
-                className="w-16 h-16 text-red-600 dark:text-red-400 mx-auto mb-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <p className="text-red-600 dark:text-red-400 mb-4">{error}</p>
-              <button
-                onClick={() => router.push('/')}
-                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                Try Again
-              </button>
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6">
+              <div className="text-center mb-6">
+                <svg
+                  className="w-16 h-16 text-red-600 dark:text-red-400 mx-auto mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <p className="text-red-600 dark:text-red-400 font-semibold mb-2">Analysis Failed</p>
+                <p className="text-sm text-red-700 dark:text-red-300 mb-4">{error}</p>
+              </div>
+
+              {/* Error Details */}
+              <div className="mb-6 p-4 bg-red-100 dark:bg-red-950/30 rounded border border-red-200 dark:border-red-800">
+                <p className="text-xs font-semibold text-red-800 dark:text-red-200 mb-2">Possible causes:</p>
+                <ul className="text-xs text-red-700 dark:text-red-300 space-y-1 list-disc list-inside">
+                  <li>Website is not accessible or protected</li>
+                  <li>Temporary server issue</li>
+                  <li>Invalid URL format</li>
+                  <li>Database connectivity issue</li>
+                </ul>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 justify-center flex-wrap">
+                <button
+                  onClick={() => router.push('/')}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Try Again
+                </button>
+                <a
+                  href="/debug"
+                  target="_blank"
+                  className="px-6 py-2 bg-gray-600 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-700 dark:hover:bg-gray-600 transition-colors"
+                >
+                  View System Diagnostics
+                </a>
+                <a
+                  href="/api/health"
+                  target="_blank"
+                  className="px-6 py-2 border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  Check API Health
+                </a>
+              </div>
+
+              {/* Support Info */}
+              <div className="mt-6 pt-4 border-t border-red-200 dark:border-red-800">
+                <p className="text-xs text-center text-red-600 dark:text-red-400">
+                  If the problem persists, check the system diagnostics page for detailed error logs
+                </p>
+              </div>
             </div>
           ) : (
             <>
