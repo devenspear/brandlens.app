@@ -1,288 +1,215 @@
-# Agency Template
+# 🔍 LLM Brand Lens
 
-A modern Next.js template with ShadCN UI, Framer Motion, and a complete design system. Built for Vercel deployment with zero CSS bugs out of the box.
+> **See how AI reads your community**
 
-## 🎯 Why This Template?
+A comprehensive brand audit tool that analyzes how multiple frontier LLMs (OpenAI, Anthropic, Google) perceive your community's brand, positioning, and promise — based solely on public website content.
 
-This template eliminates 80% of common CSS issues by:
-- ✅ Using CSS variables exclusively (no hardcoded colors)
-- ✅ Proper theme architecture with `next-themes`
-- ✅ Centralized design system configuration
-- ✅ Type-safe component patterns
-- ✅ Clean separation between styling and logic
+[![Next.js](https://img.shields.io/badge/Next.js-15-black)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue)](https://www.typescriptlang.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-6-2D3748)](https://www.prisma.io/)
+[![License](https://img.shields.io/badge/License-Proprietary-red)](LICENSE)
 
-## 🚀 Features
+## 🎯 What It Does
 
-- **Next.js 15** - Latest version with App Router
-- **ShadCN UI** - Beautiful, accessible components with built-in theme support
-- **Framer Motion** - Smooth animations with reusable presets
-- **Tailwind CSS v4** - Using modern OKLCH color space
-- **TypeScript** - Full type safety
-- **Dark Mode** - Automatic theme switching with zero configuration
-- **Vercel Ready** - Optimized for Vercel deployment
+LLM Brand Lens provides an AI-powered brand audit by:
 
-## 📁 Project Structure
+- **Querying 3 frontier LLMs** simultaneously (GPT-4, Claude 3.5, Gemini 1.5)
+- **Analyzing 8 dimensions** per model: brand synopsis, positioning, tone, segments, amenities, trust signals, messaging quality, and recommendations
+- **Computing consensus** across models with agreement scores and divergence detection
+- **Generating actionable insights** prioritized by impact and effort
+- **Creating shareable reports** with comprehensive analysis
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Node.js 18+
+- PostgreSQL database
+- API keys for OpenAI, Anthropic, and Google AI
+
+### Installation
+
+```bash
+# Clone the repository
+git clone https://github.com/devenspear/brandlens.app.git
+cd brandlens.app
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env
+# Edit .env and add your API keys
+
+# Set up database
+npx prisma db push
+npx prisma generate
+
+# Start development server
+npm run dev
+```
+
+Visit [http://localhost:3000](http://localhost:3000)
+
+## 📋 Required Environment Variables
+
+```env
+# Database
+DATABASE_URL="your-postgres-connection-string"
+
+# LLM Provider API Keys (Required)
+OPENAI_API_KEY="sk-..."
+ANTHROPIC_API_KEY="sk-ant-..."
+GOOGLE_AI_API_KEY="..."
+
+# Application
+NEXT_PUBLIC_APP_URL="http://localhost:3000"
+NODE_ENV="development"
+```
+
+## 🏗️ Architecture
 
 ```
-agency-template/
+brandlens.app/
 ├── app/
-│   ├── layout.tsx          # Root layout with ThemeProvider
-│   ├── page.tsx             # Example home page
-│   └── globals.css          # Clean CSS with only variables
-├── components/
-│   ├── sections/            # Page sections
-│   │   ├── hero.tsx        # Hero section with variants
-│   │   ├── stats.tsx       # Animated stats section
-│   │   └── cta.tsx         # Call-to-action section
-│   ├── blocks/              # Reusable components
-│   │   ├── animated-counter.tsx
-│   │   └── stat-card.tsx
-│   ├── shared/              # Shared utilities
-│   │   └── theme-toggle.tsx
-│   └── ui/                  # ShadCN components
-│       ├── button.tsx
-│       └── card.tsx
+│   ├── api/
+│   │   ├── projects/           # Project creation & status
+│   │   └── reports/            # Report retrieval
+│   ├── project/[id]/           # Status tracking page
+│   ├── report/[token]/         # Report viewer
+│   └── page.tsx                # Landing page
 ├── lib/
-│   ├── design-system.ts    # Design tokens & animations
-│   └── utils.ts            # Utility functions
-└── README.md
+│   ├── services/
+│   │   ├── scraper.ts          # Web scraping
+│   │   ├── llm-providers.ts    # AI model adapters
+│   │   ├── brand-analyzer.ts   # Multi-model orchestration
+│   │   ├── consensus-analyzer.ts # Agreement analysis
+│   │   └── report-generator.ts # Report assembly
+│   ├── prompts/
+│   │   └── templates.ts        # Standardized prompts
+│   └── types/                  # TypeScript definitions
+├── prisma/
+│   └── schema.prisma           # Database schema
+└── components/                 # React components
 ```
 
-## 🎨 Design System
+## 🎨 Features
 
-The `lib/design-system.ts` file contains centralized design tokens:
+### Multi-Model Analysis
+- Parallel queries to 3 LLMs
+- Raw response storage for transparency
+- Token and cost tracking per run
 
-### Gradients
-```typescript
-designSystem.gradients.primary    // Theme-aware gradient
-designSystem.gradients.warm       // Warm color gradient
-designSystem.gradients.cool       // Cool color gradient
-```
+### 8 Analysis Dimensions
+1. **Brand Synopsis** — 120-150 word AI-generated summary
+2. **Positioning Pillars** — 3-5 key differentiators
+3. **Tone of Voice** — Linguistic style assessment
+4. **Buyer Segments** — Fair Housing compliant audience identification
+5. **Amenity Claims** — Stated vs implied parsing
+6. **Trust Signals** — Credibility indicator detection
+7. **Messaging Scores** — Clarity, specificity, differentiation, trust
+8. **Recommendations** — Prioritized action items
 
-### Animations
-```typescript
-designSystem.animations.fadeIn     // Fade in effect
-designSystem.animations.fadeInUp   // Fade in from bottom
-designSystem.animations.scaleIn    // Scale and fade
-```
+### Consensus Analysis
+- Agreement Index (0-100%)
+- Common theme extraction
+- Divergence detection with explanations
+- Evidence citations
 
-### Spacing
-```typescript
-designSystem.spacing.section       // Standard section padding
-designSystem.spacing.container     // Max-width container
-```
+### Report Viewer
+- 4 tabbed sections (Overview, Models, Messaging, Recommendations)
+- Dark mode support
+- Responsive design
+- Shareable URLs
 
-### Typography
-```typescript
-designSystem.typography.h1         // Responsive heading 1
-designSystem.typography.body       // Body text
-```
+## 🔒 Ethical Considerations
 
-## 🔧 Getting Started
+### Fair Housing Compliance
+- No protected attribute inference (race, religion, national origin, familial status, disability)
+- Focus on lifestyle preferences and values
+- Transparent methodology
 
-1. **Clone and install:**
-   ```bash
-   git clone <your-repo>
-   cd agency-template
-   npm install
-   ```
+### Data Privacy
+- Public content only
+- No PII collection
+- No private data ingestion
+- Opt-out mechanism for site owners
 
-2. **Run development server:**
-   ```bash
-   npm run dev
-   ```
+### Transparency
+- All findings cite source evidence
+- Model outputs shown alongside consensus
+- Clear AI interpretation disclaimers
 
-3. **Open browser:**
-   ```
-   http://localhost:3000
-   ```
+## 📊 Usage Flow
 
-## 📝 Using Components
+1. **Enter URL** — Submit a website for analysis
+2. **Monitor Progress** — Real-time status updates (Scraping → Analyzing → Complete)
+3. **View Report** — Comprehensive multi-tab report with insights
+4. **Take Action** — Prioritized recommendations with before/after examples
 
-### Hero Section
+## 🛠️ Tech Stack
 
-```tsx
-import { Hero } from "@/components/sections/hero";
+- **Frontend**: Next.js 15, TypeScript, Tailwind CSS, Framer Motion
+- **Backend**: Node.js, Prisma ORM, PostgreSQL
+- **AI Models**: OpenAI GPT-4, Anthropic Claude 3.5, Google Gemini 1.5
+- **Web Scraping**: Cheerio
+- **Utilities**: Zod validation, nanoid for tokens
 
-<Hero
-  variant="gradient"
-  subtitle="Your subtitle"
-  title="Your amazing title"
-  description="Your description"
-  primaryCta={{ label: "Get Started", href: "#" }}
-  secondaryCta={{ label: "Learn More", href: "#" }}
-/>
-```
+## 📈 Database Schema
 
-**Variants:** `default`, `gradient`, `minimal`
+6 core tables:
+- `projects` — Brand audit projects
+- `sources` — Scraped website content
+- `llm_runs` — LLM API calls with responses
+- `findings` — Extracted insights
+- `competitors` — Competitive positioning data
+- `reports` — Generated reports with share tokens
 
-### Stats Section
+## 🚧 Roadmap
 
-```tsx
-import { Stats } from "@/components/sections/stats";
+- [ ] PDF export functionality
+- [ ] Background job queue (BullMQ)
+- [ ] User authentication
+- [ ] Competitive search integration
+- [ ] Public report gallery
+- [ ] Human vs LLM comparison
+- [ ] Multi-lingual support
+- [ ] Report versioning and history
 
-<Stats
-  title="Our Impact"
-  description="Numbers that matter"
-  stats={[
-    {
-      value: 100,
-      suffix: "%",
-      label: "Success Rate",
-      colorClass: "text-blue-500 dark:text-blue-400"
-    }
-  ]}
-  columns={4}
-/>
-```
+## 📖 Documentation
 
-**Columns:** `2`, `3`, or `4`
+See [README-LLM-BRAND-LENS.md](README-LLM-BRAND-LENS.md) for comprehensive documentation including:
+- Detailed setup instructions
+- API documentation
+- Prompt engineering details
+- Troubleshooting guide
+- Security considerations
 
-### CTA Section
+## 🤝 Contributing
 
-```tsx
-import { Cta } from "@/components/sections/cta";
+This project follows the PRD in `LLM Brand Lens — Product Requirements Document (PRD).md`
 
-<Cta
-  variant="card"
-  title="Ready to start?"
-  description="Let's build something great"
-  primaryCta={{ label: "Get Started", href: "#" }}
-/>
-```
-
-**Variants:** `default`, `gradient`, `card`
-
-## 🎯 v0.dev Integration
-
-This template is designed to work seamlessly with [v0.dev](https://v0.dev):
-
-1. **Generate components** in v0.dev
-2. **Copy the code** to your project
-3. **Use design system tokens** for consistent styling
-4. **Add to your pages** instantly
-
-### Example v0.dev Prompt:
-
-> "Create a feature card component with an icon, title, and description. Use the ShadCN card component and make it responsive. Include hover effects with Framer Motion."
-
-Then integrate it using our design system:
-
-```tsx
-// Use design tokens instead of hardcoded values
-<motion.div {...designSystem.animations.scaleIn}>
-  <Card className={designSystem.radius.xl}>
-    {/* Your v0.dev generated content */}
-  </Card>
-</motion.div>
-```
-
-## 🎨 Customizing Colors
-
-All colors are defined using CSS variables in `app/globals.css`. To customize:
-
-1. **Light mode colors:** Edit the `:root` section
-2. **Dark mode colors:** Edit the `.dark` section
-3. **Use OKLCH format** for better color representation
-
-Example:
-```css
-:root {
-  --primary: oklch(0.205 0 0);        /* Your brand color */
-  --accent: oklch(0.646 0.222 41.116); /* Accent color */
-}
-```
-
-## 📦 Adding New ShadCN Components
-
-```bash
-npx shadcn@latest add [component-name]
-```
-
-Examples:
-```bash
-npx shadcn@latest add dialog
-npx shadcn@latest add dropdown-menu
-npx shadcn@latest add form
-```
-
-## 🚀 Deploying to Vercel
-
-1. **Push to GitHub:**
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git push origin main
-   ```
-
-2. **Import in Vercel:**
-   - Go to [vercel.com](https://vercel.com)
-   - Click "Import Project"
-   - Select your repository
-   - Deploy!
-
-## 🔄 Benefits Over Starting from Scratch
-
-| Challenge | Old Way | This Template |
-|-----------|---------|---------------|
-| Dark mode issues | Hours of debugging | ✅ Works instantly |
-| Color conflicts | !important hell | ✅ CSS variables |
-| Animation setup | Install & configure | ✅ Ready-to-use presets |
-| Component library | Build from scratch | ✅ ShadCN included |
-| Design consistency | Manual tracking | ✅ Design system |
-| Theme switching | Custom implementation | ✅ next-themes built-in |
-
-## 📚 Key Concepts
-
-### CSS Architecture
-- **No hardcoded colors** - Everything uses CSS variables
-- **No !important rules** - Proper specificity management
-- **Theme-aware** - Colors automatically adapt to light/dark mode
-
-### Component Patterns
-- **Composition over configuration** - Build complex UIs from simple blocks
-- **Type-safe props** - Full TypeScript support
-- **Reusable sections** - Drop in pre-built sections
-
-### Design System
-- **Single source of truth** - All design tokens in one file
-- **Consistent spacing** - Use spacing system everywhere
-- **Animation presets** - Smooth animations without repetition
-
-## 🤝 Best Practices
-
-1. **Always use design system tokens:**
-   ```tsx
-   // ✅ Good
-   <div className={designSystem.spacing.section}>
-
-   // ❌ Avoid
-   <div className="py-16 md:py-24">
-   ```
-
-2. **Use CSS variables for colors:**
-   ```tsx
-   // ✅ Good
-   <div className="bg-primary text-primary-foreground">
-
-   // ❌ Avoid
-   <div className="bg-blue-500 text-white">
-   ```
-
-3. **Leverage component variants:**
-   ```tsx
-   // ✅ Good - variants handle complexity
-   <Hero variant="gradient" />
-
-   // ❌ Avoid - inline conditional styling
-   <Hero className={theme === 'dark' ? '...' : '...'} />
-   ```
+Key principles:
+- **Simple by design** — One input, one clear report
+- **Transparent** — Show model-by-model outputs
+- **Ethical** — Fair Housing compliance, public data only
+- **Actionable** — Every section ends with concrete next moves
 
 ## 📄 License
 
-MIT - Feel free to use this template for any project!
+Proprietary — Contact for licensing
+
+## 🙏 Acknowledgments
+
+Built with:
+- [Next.js](https://nextjs.org/)
+- [Prisma](https://www.prisma.io/)
+- [OpenAI](https://openai.com/)
+- [Anthropic](https://www.anthropic.com/)
+- [Google AI](https://ai.google.dev/)
 
 ---
 
-Built with ❤️ for fast, bug-free web development.
+**Generated with [Claude Code](https://claude.com/claude-code)**
+
+For questions or support, visit [brandlens.app](https://brandlens.app)
