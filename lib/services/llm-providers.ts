@@ -84,7 +84,7 @@ export class AnthropicProvider implements ILLMProvider {
   async analyze<T = any>(prompt: string, config: LLMConfig): Promise<LLMResponse<T>> {
     try {
       const response = await this.client.messages.create({
-        model: config.model || 'claude-3-5-sonnet-20241022',
+        model: config.model || 'claude-3-5-sonnet-20240620',
         max_tokens: config.maxTokens || 4000,
         temperature: config.temperature || 0.3,
         messages: [
@@ -110,7 +110,7 @@ export class AnthropicProvider implements ILLMProvider {
 
       return {
         provider: LlmProvider.ANTHROPIC,
-        model: config.model || 'claude-3-5-sonnet-20241022',
+        model: config.model || 'claude-3-5-sonnet-20240620',
         content: parsed,
         tokensUsed,
         cost,
