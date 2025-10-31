@@ -309,7 +309,7 @@ export class BrandAnalyzer {
       case LlmProvider.ANTHROPIC:
         return 'claude-sonnet-4-5-20250929';
       case LlmProvider.GOOGLE:
-        return 'gemini-1.5-pro';
+        return 'gemini-2.5-pro';
       default:
         throw new Error(`Unknown provider: ${provider}`);
     }

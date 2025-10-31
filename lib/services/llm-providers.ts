@@ -139,7 +139,7 @@ export class GoogleProvider implements ILLMProvider {
   async analyze<T = any>(prompt: string, config: LLMConfig): Promise<LLMResponse<T>> {
     try {
       const model = this.client.getGenerativeModel({
-        model: config.model || 'gemini-1.5-pro',
+        model: config.model || 'gemini-2.5-pro',
       });
 
       const result = await model.generateContent({
@@ -164,7 +164,7 @@ export class GoogleProvider implements ILLMProvider {
 
       return {
         provider: LlmProvider.GOOGLE,
-        model: config.model || 'gemini-1.5-pro',
+        model: config.model || 'gemini-2.5-pro',
         content: parsed,
         tokensUsed,
         cost,
