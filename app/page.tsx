@@ -47,7 +47,7 @@ export default function Home() {
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            LLM Brand Lens
+            Brand Lens
           </h1>
           <p className="text-xl text-gray-600 dark:text-gray-300 mb-4">
             See how AI reads your community
