@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
 
     // Start analysis asynchronously
     // In production, use a job queue like BullMQ
+    console.log('[API] 🤖 Starting AI analysis');
     brandAnalyzer.analyzeProject(project.id).catch(error => {
       console.error('[API] Analysis failed:', error);
     });
