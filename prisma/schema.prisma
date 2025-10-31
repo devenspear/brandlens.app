@@ -1,0 +1,164 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  url         String
+  region      String?
+  createdBy   String?
+  status      ProjectStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  sources     Source[]
+  llmRuns     LlmRun[]
+  findings    Finding[]
+  competitors Competitor[]
+  reports     Report[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Source {
+  id           String   @id @default(cuid())
+  projectId    String
+  type         SourceType
+  url          String
+  contentHash  String?
+  textExcerpt  String?  @db.Text
+  fullContent  String?  @db.Text
+  metadata     Json?
+  createdAt    DateTime @default(now())
+
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([type])
+}
+
+model LlmRun {
+  id          String   @id @default(cuid())
+  projectId   String
+  provider    LlmProvider
+  model       String
+  temperature Float?
+  maxTokens   Int?
+  settings    Json?
+  rawResponse Json
+  tokensUsed  Int?
+  cost        Float?
+  status      RunStatus @default(PENDING)
+  error       String?
+  createdAt   DateTime @default(now())
+
+  project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([provider])
+  @@index([status])
+}
+
+model Finding {
+  id           String   @id @default(cuid())
+  projectId    String
+  kind         FindingKind
+  value        Json
+  evidenceRef  String?  @db.Text
+  confidence   Float?
+  createdAt    DateTime @default(now())
+
+  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([kind])
+}
+
+model Competitor {
+  id        String   @id @default(cuid())
+  projectId String
+  name      String
+  url       String
+  axisX     Float?
+  axisY     Float?
+  notes     String?  @db.Text
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+}
+
+model Report {
+  id         String   @id @default(cuid())
+  projectId  String
+  urlToken   String   @unique
+  isPublic   Boolean  @default(false)
+  version    Int      @default(1)
+  data       Json
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  expiresAt  DateTime?
+
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
+  @@index([urlToken])
+}
+
+enum ProjectStatus {
+  PENDING
+  SCRAPING
+  ANALYZING
+  COMPLETED
+  FAILED
+}
+
+enum SourceType {
+  MAIN_PAGE
+  ABOUT
+  HOMES
+  AMENITIES
+  LOCATION
+  CONTACT
+  PRESS
+  OTHER
+}
+
+enum LlmProvider {
+  OPENAI
+  ANTHROPIC
+  GOOGLE
+}
+
+enum RunStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum FindingKind {
+  BRAND_SYNOPSIS
+  POSITIONING_PILLAR
+  TONE_OF_VOICE
+  BUYER_SEGMENT
+  AMENITY_CLAIM
+  TRUST_SIGNAL
+  RECOMMENDATION
+  CLARITY_SCORE
+  SPECIFICITY_SCORE
+  DIFFERENTIATION_SCORE
+  TRUST_SCORE
+}
