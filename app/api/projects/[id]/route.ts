@@ -4,11 +4,12 @@ import { reportGenerator } from '@/lib/services/report-generator';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const project = await prisma.project.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         reports: {
           orderBy: { createdAt: 'desc' },

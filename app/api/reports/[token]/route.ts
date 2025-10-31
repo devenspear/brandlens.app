@@ -3,10 +3,11 @@ import { reportGenerator } from '@/lib/services/report-generator';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
   try {
-    const report = await reportGenerator.getReportByToken(params.token);
+    const { token } = await params;
+    const report = await reportGenerator.getReportByToken(token);
 
     if (!report) {
       return NextResponse.json(
