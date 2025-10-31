@@ -49,18 +49,35 @@ export async function POST(request: NextRequest) {
     const duration = Date.now() - startTime;
     apiLogger.logResponse(logId, 200, duration, { id: project.id });
 
-    // Start analysis asynchronously
-    // In production, use a job queue like BullMQ
+    // Start analysis synchronously (waits for completion)
+    // Using synchronous approach with Pro plan's 60s timeout
     console.log('[API] 🤖 Starting AI analysis');
-    brandAnalyzer.analyzeProject(project.id).catch(error => {
-      console.error('[API] Analysis failed:', error);
-    });
+    try {
+      await brandAnalyzer.analyzeProject(project.id);
+      console.log('[API] ✅ Analysis completed successfully');
 
-    return NextResponse.json({
-      id: project.id,
-      url: project.url,
-      status: project.status,
-    });
+      // Fetch updated project with results
+      const updatedProject = await prisma.project.findUnique({
+        where: { id: project.id },
+        include: { reports: { orderBy: { createdAt: 'desc' }, take: 1 } },
+      });
+
+      return NextResponse.json({
+        id: project.id,
+        url: project.url,
+        status: updatedProject?.status || 'COMPLETED',
+        hasReport: (updatedProject?.reports?.length || 0) > 0,
+      });
+    } catch (analysisError) {
+      console.error('[API] Analysis failed:', analysisError);
+      // Return project info even if analysis failed
+      return NextResponse.json({
+        id: project.id,
+        url: project.url,
+        status: 'FAILED',
+        error: analysisError instanceof Error ? analysisError.message : 'Analysis failed',
+      }, { status: 200 }); // Still 200 because project was created
+    }
   } catch (error) {
     const duration = Date.now() - startTime;
     const errorMessage = error instanceof Error ? error.message : String(error);
