@@ -2,6 +2,7 @@ import { LlmProvider, ProjectStatus } from '@prisma/client';
 import { prisma } from '../prisma/client';
 import { LLMProviderFactory } from './llm-providers';
 import { webScraper } from './scraper';
+import { reportGenerator } from './report-generator';
 import {
   createBrandSynopsisPrompt,
   createPositioningPillarsPrompt,
@@ -17,11 +18,25 @@ import { BrandSynopsis, LLMConfig } from '../types';
 
 export class BrandAnalyzer {
   /**
+   * Update progress for UI feedback
+   */
+  private async updateProgress(projectId: string, message: string, percent: number): Promise<void> {
+    await prisma.project.update({
+      where: { id: projectId },
+      data: {
+        progressMessage: message,
+        progressPercent: percent,
+      },
+    });
+  }
+
+  /**
    * Run complete brand analysis for a project
    */
   async analyzeProject(projectId: string): Promise<void> {
     try {
       // Update status
+      await this.updateProgress(projectId, 'Starting analysis...', 0);
       await prisma.project.update({
         where: { id: projectId },
         data: { status: ProjectStatus.SCRAPING },
@@ -37,10 +52,12 @@ export class BrandAnalyzer {
       }
 
       // Step 1: Scrape website
+      await this.updateProgress(projectId, `Scraping ${project.url}...`, 5);
       console.log(`\n🌐 SCRAPING: ${project.url}`);
       const scrapeStart = Date.now();
       const scrapeResult = await webScraper.scrapeWebsite(project.url);
       console.log(`✅ SCRAPING COMPLETE: ${Date.now() - scrapeStart}ms | Main page + ${scrapeResult.subPages.length} subpages`);
+      await this.updateProgress(projectId, `Scraped ${scrapeResult.subPages.length + 1} pages successfully`, 10);
 
       if (scrapeResult.error) {
         throw new Error(`Scraping failed: ${scrapeResult.error}`);
@@ -79,6 +96,7 @@ export class BrandAnalyzer {
         data: { status: ProjectStatus.ANALYZING },
       });
 
+      await this.updateProgress(projectId, `Analyzing with OpenAI, Anthropic, and Google...`, 15);
       console.log(`\n🤖 ANALYZING WITH ALL LLMS IN PARALLEL...`);
       const analysisStart = Date.now();
       const promptContext: PromptContext = {
@@ -96,14 +114,26 @@ export class BrandAnalyzer {
       );
 
       console.log(`✅ ALL LLM ANALYSES COMPLETE: ${Date.now() - analysisStart}ms`);
+      await this.updateProgress(projectId, `Analysis complete! Generating report...`, 95);
 
-      // Step 3: Mark as completed
+      // Step 3: Generate Report
+      console.log(`\n📄 GENERATING REPORT...`);
+      const reportStart = Date.now();
+      const reportToken = await reportGenerator.generateReport(projectId);
+      const reportUrl = `/report/${reportToken}`;
+      console.log(`✅ REPORT GENERATED: ${Date.now() - reportStart}ms | URL: ${reportUrl}`);
+
+      // Step 4: Mark as completed
       await prisma.project.update({
         where: { id: projectId },
-        data: { status: ProjectStatus.COMPLETED },
+        data: {
+          status: ProjectStatus.COMPLETED,
+          progressMessage: 'Complete',
+          progressPercent: 100,
+        },
       });
 
-      console.log(`\n🎊 PROJECT COMPLETE: ${projectId}`);
+      console.log(`\n🎊 PROJECT COMPLETE: ${projectId} | Report: ${reportUrl}`);
     } catch (error) {
       console.error('Analysis error:', error);
       await prisma.project.update({

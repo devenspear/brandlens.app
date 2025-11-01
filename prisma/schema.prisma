@@ -11,14 +11,16 @@ datasource db {
 }
 
 model Project {
-  id          String   @id @default(cuid())
-  url         String
-  email       String
-  region      String?
-  createdBy   String?
-  status      ProjectStatus @default(PENDING)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(cuid())
+  url              String
+  email            String
+  region           String?
+  createdBy        String?
+  status           ProjectStatus @default(PENDING)
+  progressMessage  String?  @default("Initializing...")
+  progressPercent  Int?     @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   // Relations
   sources     Source[]

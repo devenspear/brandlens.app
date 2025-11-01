@@ -39,8 +39,9 @@ export async function GET(
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
 
-      // Latest report
+      // Latest report with URL
       report: project.reports[0] || null,
+      reportUrl: project.reports[0] ? `/report/${project.reports[0].urlToken}` : null,
 
       // Findings grouped by type
       findings: {
