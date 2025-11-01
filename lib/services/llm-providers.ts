@@ -56,7 +56,24 @@ export class OpenAIProvider implements ILLMProvider {
         throw new Error('No content in response');
       }
 
-      const parsed = JSON.parse(content) as T;
+      // Defensive parsing: strip markdown fences and validate
+      const cleanedText = stripMarkdownCodeFences(content.trim());
+
+      // Log first 200 chars for debugging
+      console.log(`[OpenAI] Raw response preview: ${cleanedText.substring(0, 200)}...`);
+
+      if (!cleanedText) {
+        throw new Error('Empty response after cleaning markdown fences');
+      }
+
+      let parsed: T;
+      try {
+        parsed = JSON.parse(cleanedText) as T;
+      } catch (parseError) {
+        console.error(`[OpenAI] JSON parse error. Raw content (first 500 chars): ${cleanedText.substring(0, 500)}`);
+        throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}`);
+      }
+
       const tokensUsed = response.usage?.total_tokens || 0;
 
       // Rough cost calculation (GPT-4o pricing as of 2025)
@@ -73,7 +90,7 @@ export class OpenAIProvider implements ILLMProvider {
         raw: response,
       };
     } catch (error) {
-      console.error('OpenAI analysis error:', error);
+      console.error('[OpenAI] Analysis error:', error);
       throw error;
     }
   }
@@ -113,8 +130,24 @@ export class AnthropicProvider implements ILLMProvider {
         throw new Error('Unexpected response type');
       }
 
+      // Defensive parsing: strip markdown fences and validate
       const cleanedText = stripMarkdownCodeFences(content.text);
-      const parsed = JSON.parse(cleanedText) as T;
+
+      // Log first 200 chars for debugging
+      console.log(`[Anthropic] Raw response preview: ${cleanedText.substring(0, 200)}...`);
+
+      if (!cleanedText) {
+        throw new Error('Empty response after cleaning markdown fences');
+      }
+
+      let parsed: T;
+      try {
+        parsed = JSON.parse(cleanedText) as T;
+      } catch (parseError) {
+        console.error(`[Anthropic] JSON parse error. Raw content (first 500 chars): ${cleanedText.substring(0, 500)}`);
+        throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}`);
+      }
+
       const tokensUsed = response.usage.input_tokens + response.usage.output_tokens;
 
       // Rough cost calculation (Claude 3.5 Sonnet pricing as of 2025)
@@ -131,7 +164,7 @@ export class AnthropicProvider implements ILLMProvider {
         raw: response,
       };
     } catch (error) {
-      console.error('Anthropic analysis error:', error);
+      console.error('[Anthropic] Analysis error:', error);
       throw error;
     }
   }
@@ -167,8 +200,23 @@ export class GoogleProvider implements ILLMProvider {
       const response = result.response;
       const text = response.text();
 
+      // Defensive parsing: strip markdown fences and validate
       const cleanedText = stripMarkdownCodeFences(text);
-      const parsed = JSON.parse(cleanedText) as T;
+
+      // Log first 200 chars for debugging
+      console.log(`[Google] Raw response preview: ${cleanedText.substring(0, 200)}...`);
+
+      if (!cleanedText) {
+        throw new Error('Empty response after cleaning markdown fences');
+      }
+
+      let parsed: T;
+      try {
+        parsed = JSON.parse(cleanedText) as T;
+      } catch (parseError) {
+        console.error(`[Google] JSON parse error. Raw content (first 500 chars): ${cleanedText.substring(0, 500)}`);
+        throw new Error(`Failed to parse JSON response: ${parseError instanceof Error ? parseError.message : 'Unknown parse error'}`);
+      }
 
       // Google doesn't provide detailed token counts in the same way
       // Rough estimation
@@ -186,7 +234,7 @@ export class GoogleProvider implements ILLMProvider {
         raw: result,
       };
     } catch (error) {
-      console.error('Google analysis error:', error);
+      console.error('[Google] Analysis error:', error);
       throw error;
     }
   }

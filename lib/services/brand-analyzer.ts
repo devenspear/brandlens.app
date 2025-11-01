@@ -115,15 +115,33 @@ export class BrandAnalyzer {
         subPages: scrapeResult.subPages,
       };
 
-      // Run analysis with all providers in parallel
+      // Run analysis with all providers in parallel (with graceful degradation)
       const providers = LLMProviderFactory.getAllProviders();
       console.log(`📊 Starting ${providers.length} LLM providers: ${providers.join(', ')}`);
 
-      await Promise.all(
+      const results = await Promise.allSettled(
         providers.map(provider => this.analyzeWithProvider(projectId, provider, promptContext))
       );
 
-      console.log(`✅ ALL LLM ANALYSES COMPLETE: ${Date.now() - analysisStart}ms`);
+      // Check results
+      const successful = results.filter(r => r.status === 'fulfilled').length;
+      const failed = results.filter(r => r.status === 'rejected').length;
+
+      if (successful === 0) {
+        throw new Error(`All ${providers.length} LLM providers failed`);
+      }
+
+      if (failed > 0) {
+        console.warn(`⚠️  ${failed} of ${providers.length} LLM providers failed (continuing with ${successful} providers)`);
+        // Log which ones failed
+        results.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`❌ ${providers[index]} failed:`, result.reason);
+          }
+        });
+      }
+
+      console.log(`✅ LLM ANALYSES COMPLETE: ${Date.now() - analysisStart}ms | ${successful}/${providers.length} providers succeeded`);
       await this.updateProgress(projectId, `Analysis complete! Generating report...`, 95);
 
       // Step 3: Generate Report
