@@ -6,11 +6,33 @@ import { ThemeToggle } from '@/components/shared/theme-toggle';
 
 type ProjectStatus = 'PENDING' | 'SCRAPING' | 'ANALYZING' | 'COMPLETED' | 'FAILED';
 
+interface LLMRun {
+  provider: string;
+  model: string;
+  status: string;
+  tokensUsed?: number;
+  cost?: number;
+  createdAt: string;
+}
+
 interface ProjectData {
   id: string;
   url: string;
   status: ProjectStatus;
   reportUrl?: string;
+  progressMessage?: string;
+  progressPercent?: number;
+  llmProviders?: {
+    OPENAI: LLMRun | null;
+    ANTHROPIC: LLMRun | null;
+    GOOGLE: LLMRun | null;
+  };
+  llmSummary?: {
+    total: number;
+    completed: number;
+    failed: number;
+    running: number;
+  };
 }
 
 export default function ProjectStatusPage() {
@@ -48,14 +70,14 @@ export default function ProjectStatusPage() {
     // Initial poll
     pollProject();
 
-    // Poll every 5 seconds until completed or failed
+    // Poll every 2 seconds for real-time updates
     const interval = setInterval(() => {
       if (project?.status === 'COMPLETED' || project?.status === 'FAILED') {
         clearInterval(interval);
       } else {
         pollProject();
       }
-    }, 5000);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, [params.id, project?.status, router]);
@@ -104,7 +126,7 @@ export default function ProjectStatusPage() {
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-4 dark:text-white">
-              {project ? getStatusMessage(project.status) : 'Loading...'}
+              {project?.progressMessage || (project ? getStatusMessage(project.status) : 'Loading...')}
             </h1>
             {project && (
               <p className="text-gray-600 dark:text-gray-400">
@@ -183,16 +205,72 @@ export default function ProjectStatusPage() {
                   <div
                     className="bg-gradient-to-r from-blue-600 to-purple-600 h-full transition-all duration-500 ease-out"
                     style={{
-                      width: `${project ? getProgressPercentage(project.status) : 0}%`,
+                      width: `${project?.progressPercent ?? (project ? getProgressPercentage(project.status) : 0)}%`,
                     }}
                   />
                 </div>
                 {project && (
                   <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-2">
-                    {getProgressPercentage(project.status)}% complete
+                    {project.progressPercent ?? getProgressPercentage(project.status)}% complete
                   </p>
                 )}
               </div>
+
+              {/* LLM Provider Status (during ANALYZING phase) */}
+              {project?.status === 'ANALYZING' && project.llmProviders && (
+                <div className="mb-8 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">
+                    AI Model Analysis Progress
+                  </h3>
+                  <div className="space-y-2">
+                    {(['OPENAI', 'ANTHROPIC', 'GOOGLE'] as const).map((provider) => {
+                      const llm = project.llmProviders?.[provider];
+                      const providerNames = {
+                        OPENAI: 'OpenAI GPT-4o',
+                        ANTHROPIC: 'Anthropic Claude',
+                        GOOGLE: 'Google Gemini',
+                      };
+
+                      return (
+                        <div key={provider} className="flex items-center justify-between text-sm">
+                          <span className="text-gray-700 dark:text-gray-300">{providerNames[provider]}</span>
+                          <div className="flex items-center gap-2">
+                            {llm?.status === 'COMPLETED' && (
+                              <>
+                                <span className="text-green-600 dark:text-green-400 text-xs">✓ Complete</span>
+                                <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                              </>
+                            )}
+                            {llm?.status === 'FAILED' && (
+                              <>
+                                <span className="text-red-600 dark:text-red-400 text-xs">✗ Failed</span>
+                                <span className="w-2 h-2 rounded-full bg-red-500"></span>
+                              </>
+                            )}
+                            {llm?.status === 'RUNNING' && (
+                              <>
+                                <span className="text-blue-600 dark:text-blue-400 text-xs">Running...</span>
+                                <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                              </>
+                            )}
+                            {!llm && (
+                              <>
+                                <span className="text-gray-500 dark:text-gray-500 text-xs">Waiting...</span>
+                                <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {project.llmSummary && project.llmSummary.failed > 0 && (
+                    <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-3">
+                      Note: {project.llmSummary.failed} provider(s) failed, continuing with {project.llmSummary.completed} successful provider(s)
+                    </p>
+                  )}
+                </div>
+              )}
 
               {/* Loading Animation */}
               {project?.status !== 'COMPLETED' && project?.status !== 'FAILED' && (

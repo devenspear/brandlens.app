@@ -39,6 +39,10 @@ export async function GET(
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
 
+      // Real-time progress tracking
+      progressMessage: project.progressMessage || 'Initializing...',
+      progressPercent: project.progressPercent || 0,
+
       // Latest report with URL
       report: project.reports[0] || null,
       reportUrl: project.reports[0] ? `/report/${project.reports[0].urlToken}` : null,
@@ -60,15 +64,20 @@ export async function GET(
         recommendations: project.findings.filter(f => f.kind === 'RECOMMENDATION').map(f => f.value),
       },
 
-      // LLM runs summary (which providers ran)
-      llmAnalyses: project.llmRuns.map(run => ({
-        provider: run.provider,
-        model: run.model,
-        status: run.status,
-        tokensUsed: run.tokensUsed,
-        cost: run.cost,
-        createdAt: run.createdAt,
-      })),
+      // LLM runs summary (which providers ran) - enhanced for debugging
+      llmProviders: {
+        OPENAI: project.llmRuns.find(r => r.provider === 'OPENAI') || null,
+        ANTHROPIC: project.llmRuns.find(r => r.provider === 'ANTHROPIC') || null,
+        GOOGLE: project.llmRuns.find(r => r.provider === 'GOOGLE') || null,
+      },
+
+      // LLM analysis summary
+      llmSummary: {
+        total: project.llmRuns.length,
+        completed: project.llmRuns.filter(r => r.status === 'COMPLETED').length,
+        failed: project.llmRuns.filter(r => r.status === 'FAILED').length,
+        running: project.llmRuns.filter(r => r.status === 'RUNNING').length,
+      },
 
       // Analysis metadata
       totalFindings: project.findings.length,
