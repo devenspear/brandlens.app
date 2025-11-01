@@ -166,7 +166,10 @@ export class BrandAnalyzer {
       const segmentsResult = await llmProvider.analyze(segmentsPrompt, config);
 
       await this.saveLLMRun(projectId, provider, config, segmentsResult);
-      for (const segment of segmentsResult.content) {
+      const segments = Array.isArray(segmentsResult.content)
+        ? segmentsResult.content
+        : (segmentsResult.content as any)?.segments || [];
+      for (const segment of segments) {
         await this.saveFinding(projectId, 'BUYER_SEGMENT', segment, segmentsPrompt);
       }
 
@@ -176,7 +179,10 @@ export class BrandAnalyzer {
       const amenitiesResult = await llmProvider.analyze(amenitiesPrompt, config);
 
       await this.saveLLMRun(projectId, provider, config, amenitiesResult);
-      for (const amenity of amenitiesResult.content) {
+      const amenities = Array.isArray(amenitiesResult.content)
+        ? amenitiesResult.content
+        : (amenitiesResult.content as any)?.amenities || [];
+      for (const amenity of amenities) {
         await this.saveFinding(projectId, 'AMENITY_CLAIM', amenity, amenitiesPrompt);
       }
 
@@ -186,7 +192,10 @@ export class BrandAnalyzer {
       const trustResult = await llmProvider.analyze(trustPrompt, config);
 
       await this.saveLLMRun(projectId, provider, config, trustResult);
-      for (const signal of trustResult.content) {
+      const trustSignals = Array.isArray(trustResult.content)
+        ? trustResult.content
+        : (trustResult.content as any)?.signals || [];
+      for (const signal of trustSignals) {
         await this.saveFinding(projectId, 'TRUST_SIGNAL', signal, trustPrompt);
       }
 
@@ -232,7 +241,10 @@ export class BrandAnalyzer {
       const recommendationsResult = await llmProvider.analyze(recommendationsPrompt, config);
 
       await this.saveLLMRun(projectId, provider, config, recommendationsResult);
-      for (const rec of recommendationsResult.content) {
+      const recommendations = Array.isArray(recommendationsResult.content)
+        ? recommendationsResult.content
+        : (recommendationsResult.content as any)?.recommendations || [];
+      for (const rec of recommendations) {
         await this.saveFinding(projectId, 'RECOMMENDATION', rec, recommendationsPrompt);
       }
 
