@@ -1,8 +1,8 @@
 import * as cheerio from 'cheerio';
 import { ScrapedPage, ScrapeResult } from '../types';
 
-const MAX_PAGES = parseInt(process.env.MAX_PAGES_PER_SITE || '10');
-const TIMEOUT = 10000;
+const MAX_PAGES = parseInt(process.env.MAX_PAGES_PER_SITE || '4');
+const TIMEOUT = 8000; // 8 seconds per page
 
 export class WebScraper {
   /**
@@ -16,18 +16,19 @@ export class WebScraper {
       // Scrape main page
       const mainPage = await this.scrapePage(normalizedUrl, 'MAIN_PAGE');
 
-      // Find and scrape subpages
+      // Find and scrape subpages in parallel for speed
       const subPageUrls = this.extractSubPages(normalizedUrl, mainPage);
-      const subPages: ScrapedPage[] = [];
-
-      for (const subPageUrl of subPageUrls.slice(0, MAX_PAGES - 1)) {
+      const subPagePromises = subPageUrls.slice(0, MAX_PAGES - 1).map(async (subPageUrl) => {
         try {
-          const page = await this.scrapePage(subPageUrl.url, subPageUrl.type);
-          subPages.push(page);
+          return await this.scrapePage(subPageUrl.url, subPageUrl.type);
         } catch (error) {
           console.error(`Failed to scrape ${subPageUrl.url}:`, error);
+          return null;
         }
-      }
+      });
+
+      const subPageResults = await Promise.all(subPagePromises);
+      const subPages = subPageResults.filter((page): page is ScrapedPage => page !== null);
 
       return {
         mainPage,
