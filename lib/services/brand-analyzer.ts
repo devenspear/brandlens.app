@@ -139,7 +139,7 @@ export class BrandAnalyzer {
       const synopsisPrompt = createBrandSynopsisPrompt(context);
       const synopsisStart = Date.now();
       const synopsisResult = await llmProvider.analyze(synopsisPrompt, config);
-      console.log(`[${provider}] ✅ Step 1/8: Brand synopsis complete (${Date.now() - synopsisStart}ms, ${synopsisResult.tokensUsed} tokens, $${synopsisResult.cost.toFixed(4)})`);
+      console.log(`[${provider}] ✅ Step 1/8: Brand synopsis complete (${Date.now() - synopsisStart}ms, ${synopsisResult.tokensUsed} tokens, $${(synopsisResult.cost || 0).toFixed(4)})`);
 
       await this.saveLLMRun(projectId, provider, config, synopsisResult);
       await this.saveFinding(
@@ -154,7 +154,7 @@ export class BrandAnalyzer {
       const pillarsPrompt = createPositioningPillarsPrompt(context);
       const pillarsStart = Date.now();
       const pillarsResult = await llmProvider.analyze(pillarsPrompt, config);
-      console.log(`[${provider}] ✅ Step 2/8: Positioning pillars complete (${Date.now() - pillarsStart}ms, ${pillarsResult.tokensUsed} tokens, $${pillarsResult.cost.toFixed(4)})`);
+      console.log(`[${provider}] ✅ Step 2/8: Positioning pillars complete (${Date.now() - pillarsStart}ms, ${pillarsResult.tokensUsed} tokens, $${(pillarsResult.cost || 0).toFixed(4)})`);
 
       await this.saveLLMRun(projectId, provider, config, pillarsResult);
       // Handle both array and object responses
@@ -171,7 +171,7 @@ export class BrandAnalyzer {
       const tonePrompt = createToneOfVoicePrompt(context);
       const toneStart = Date.now();
       const toneResult = await llmProvider.analyze(tonePrompt, config);
-      console.log(`[${provider}] ✅ Step 3/8: Tone of voice complete (${Date.now() - toneStart}ms, ${toneResult.tokensUsed} tokens, $${toneResult.cost.toFixed(4)})`);
+      console.log(`[${provider}] ✅ Step 3/8: Tone of voice complete (${Date.now() - toneStart}ms, ${toneResult.tokensUsed} tokens, $${(toneResult.cost || 0).toFixed(4)})`);
 
 
       await this.saveLLMRun(projectId, provider, config, toneResult);
@@ -182,7 +182,7 @@ export class BrandAnalyzer {
       const segmentsPrompt = createBuyerSegmentsPrompt(context);
       const segmentsStart = Date.now();
       const segmentsResult = await llmProvider.analyze(segmentsPrompt, config);
-      console.log(`[${provider}] ✅ Step 4/8: Buyer segments complete (${Date.now() - segmentsStart}ms, ${segmentsResult.tokensUsed} tokens, $${segmentsResult.cost.toFixed(4)})`);
+      console.log(`[${provider}] ✅ Step 4/8: Buyer segments complete (${Date.now() - segmentsStart}ms, ${segmentsResult.tokensUsed} tokens, $${(segmentsResult.cost || 0).toFixed(4)})`);
 
       await this.saveLLMRun(projectId, provider, config, segmentsResult);
       const segments = Array.isArray(segmentsResult.content)
@@ -198,7 +198,7 @@ export class BrandAnalyzer {
       const amenitiesPrompt = createAmenitiesPrompt(context);
       const amenitiesStart = Date.now();
       const amenitiesResult = await llmProvider.analyze(amenitiesPrompt, config);
-      console.log(`[${provider}] ✅ Step 5/8: Amenity claims complete (${Date.now() - amenitiesStart}ms, ${amenitiesResult.tokensUsed} tokens, $${amenitiesResult.cost.toFixed(4)})`);
+      console.log(`[${provider}] ✅ Step 5/8: Amenity claims complete (${Date.now() - amenitiesStart}ms, ${amenitiesResult.tokensUsed} tokens, $${(amenitiesResult.cost || 0).toFixed(4)})`);
 
       await this.saveLLMRun(projectId, provider, config, amenitiesResult);
       const amenities = Array.isArray(amenitiesResult.content)
@@ -214,7 +214,7 @@ export class BrandAnalyzer {
       const trustPrompt = createTrustSignalsPrompt(context);
       const trustStart = Date.now();
       const trustResult = await llmProvider.analyze(trustPrompt, config);
-      console.log(`[${provider}] ✅ Step 6/8: Trust signals complete (${Date.now() - trustStart}ms, ${trustResult.tokensUsed} tokens, $${trustResult.cost.toFixed(4)})`);
+      console.log(`[${provider}] ✅ Step 6/8: Trust signals complete (${Date.now() - trustStart}ms, ${trustResult.tokensUsed} tokens, $${(trustResult.cost || 0).toFixed(4)})`);
 
       await this.saveLLMRun(projectId, provider, config, trustResult);
       const trustSignals = Array.isArray(trustResult.content)
@@ -230,7 +230,7 @@ export class BrandAnalyzer {
       const messagingPrompt = createMessagingAnalysisPrompt(context);
       const messagingStart = Date.now();
       const messagingResult = await llmProvider.analyze(messagingPrompt, config);
-      console.log(`[${provider}] ✅ Step 7/8: Messaging analysis complete (${Date.now() - messagingStart}ms, ${messagingResult.tokensUsed} tokens, $${messagingResult.cost.toFixed(4)})`);
+      console.log(`[${provider}] ✅ Step 7/8: Messaging analysis complete (${Date.now() - messagingStart}ms, ${messagingResult.tokensUsed} tokens, $${(messagingResult.cost || 0).toFixed(4)})`);
 
 
       await this.saveLLMRun(projectId, provider, config, messagingResult);
@@ -269,7 +269,7 @@ export class BrandAnalyzer {
       });
       const recommendationsStart = Date.now();
       const recommendationsResult = await llmProvider.analyze(recommendationsPrompt, config);
-      console.log(`[${provider}] ✅ Step 8/8: Recommendations complete (${Date.now() - recommendationsStart}ms, ${recommendationsResult.tokensUsed} tokens, $${recommendationsResult.cost.toFixed(4)})`);
+      console.log(`[${provider}] ✅ Step 8/8: Recommendations complete (${Date.now() - recommendationsStart}ms, ${recommendationsResult.tokensUsed} tokens, $${(recommendationsResult.cost || 0).toFixed(4)})`);
 
       await this.saveLLMRun(projectId, provider, config, recommendationsResult);
       const recommendations = Array.isArray(recommendationsResult.content)
@@ -284,9 +284,9 @@ export class BrandAnalyzer {
       const totalTokens = synopsisResult.tokensUsed + pillarsResult.tokensUsed + toneResult.tokensUsed +
                          segmentsResult.tokensUsed + amenitiesResult.tokensUsed + trustResult.tokensUsed +
                          messagingResult.tokensUsed + recommendationsResult.tokensUsed;
-      const totalCost = synopsisResult.cost + pillarsResult.cost + toneResult.cost +
-                       segmentsResult.cost + amenitiesResult.cost + trustResult.cost +
-                       messagingResult.cost + recommendationsResult.cost;
+      const totalCost = (synopsisResult.cost || 0) + (pillarsResult.cost || 0) + (toneResult.cost || 0) +
+                       (segmentsResult.cost || 0) + (amenitiesResult.cost || 0) + (trustResult.cost || 0) +
+                       (messagingResult.cost || 0) + (recommendationsResult.cost || 0);
 
       console.log(`[${provider}] 🎉 COMPLETE: All 8 analyses done in ${totalTime}ms | ${totalTokens} total tokens | $${totalCost.toFixed(4)} total cost`);
     } catch (error) {
