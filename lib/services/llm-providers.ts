@@ -9,6 +9,19 @@ export interface ILLMProvider {
 }
 
 /**
+ * Strip markdown code fences from JSON response
+ */
+function stripMarkdownCodeFences(text: string): string {
+  // Remove ```json ... ``` or ``` ... ``` code blocks
+  return text
+    .replace(/^```json\s*\n/gm, '')
+    .replace(/^```\s*\n/gm, '')
+    .replace(/\n```\s*$/gm, '')
+    .replace(/^```$/gm, '')
+    .trim();
+}
+
+/**
  * OpenAI Provider
  */
 export class OpenAIProvider implements ILLMProvider {
@@ -100,7 +113,8 @@ export class AnthropicProvider implements ILLMProvider {
         throw new Error('Unexpected response type');
       }
 
-      const parsed = JSON.parse(content.text) as T;
+      const cleanedText = stripMarkdownCodeFences(content.text);
+      const parsed = JSON.parse(cleanedText) as T;
       const tokensUsed = response.usage.input_tokens + response.usage.output_tokens;
 
       // Rough cost calculation (Claude 3.5 Sonnet pricing as of 2025)
@@ -153,7 +167,8 @@ export class GoogleProvider implements ILLMProvider {
       const response = result.response;
       const text = response.text();
 
-      const parsed = JSON.parse(text) as T;
+      const cleanedText = stripMarkdownCodeFences(text);
+      const parsed = JSON.parse(cleanedText) as T;
 
       // Google doesn't provide detailed token counts in the same way
       // Rough estimation

@@ -144,7 +144,11 @@ export class BrandAnalyzer {
       const pillarsResult = await llmProvider.analyze(pillarsPrompt, config);
 
       await this.saveLLMRun(projectId, provider, config, pillarsResult);
-      for (const pillar of pillarsResult.content) {
+      // Handle both array and object responses
+      const pillars = Array.isArray(pillarsResult.content)
+        ? pillarsResult.content
+        : (pillarsResult.content as any)?.pillars || [];
+      for (const pillar of pillars) {
         await this.saveFinding(projectId, 'POSITIONING_PILLAR', pillar, pillarsPrompt);
       }
 
@@ -221,7 +225,7 @@ export class BrandAnalyzer {
       console.log(`${provider}: Generating recommendations...`);
       const recommendationsPrompt = createRecommendationsPrompt(context, {
         synopsis: synopsisResult.content,
-        pillars: pillarsResult.content,
+        pillars: pillars,
         tone: toneResult.content,
         messaging: messagingResult.content,
       });
@@ -264,6 +268,9 @@ export class BrandAnalyzer {
     config: LLMConfig,
     result: any
   ): Promise<void> {
+    // Serialize raw response to remove function objects
+    const serializedRaw = JSON.parse(JSON.stringify(result.raw));
+
     await prisma.llmRun.create({
       data: {
         projectId,
@@ -272,7 +279,7 @@ export class BrandAnalyzer {
         temperature: config.temperature,
         maxTokens: config.maxTokens,
         settings: config as any,
-        rawResponse: result.raw,
+        rawResponse: serializedRaw,
         tokensUsed: result.tokensUsed,
         cost: result.cost,
         status: 'COMPLETED',
