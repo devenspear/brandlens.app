@@ -7,15 +7,11 @@ export class ConsensusAnalyzer {
    * Analyze consensus and divergence across LLM outputs
    */
   async analyzeConsensus(projectId: string): Promise<ConsensusAnalysis> {
-    // Get all findings for the project
+    // Get all findings for the project, including the LLM run details
     const findings = await prisma.finding.findMany({
-      where: { projectId },
+      where: { llmRun: { projectId } },
       include: {
-        project: {
-          include: {
-            llmRuns: true,
-          },
-        },
+        llmRun: true,
       },
     });
 
@@ -126,18 +122,14 @@ export class ConsensusAnalyzer {
   private groupByProvider(findings: any[]): Map<LlmProvider, any[]> {
     const grouped = new Map<LlmProvider, any[]>();
 
-    // This is a simplified version - in reality, you'd need to track which
-    // LLM run produced which finding
     for (const finding of findings) {
-      // For now, we'll distribute evenly across providers
-      // In production, you'd want to properly track this relationship
-      const providers = [LlmProvider.OPENAI, LlmProvider.ANTHROPIC, LlmProvider.GOOGLE];
-      const provider = providers[findings.indexOf(finding) % providers.length];
-
-      if (!grouped.has(provider)) {
-        grouped.set(provider, []);
+      const provider = finding.llmRun?.provider;
+      if (provider) {
+        if (!grouped.has(provider)) {
+          grouped.set(provider, []);
+        }
+        grouped.get(provider)!.push(finding);
       }
-      grouped.get(provider)!.push(finding);
     }
 
     return grouped;

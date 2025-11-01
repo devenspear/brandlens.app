@@ -150,6 +150,7 @@ export interface BrandAuditReport {
   recommendations: Recommendation[];
 
   humanVsLlm?: HumanVsLlmComparison;
+  humanVLLM?: HumanVsLlmComparison; // Alias for compatibility with report-generator
 
   metadata: {
     pagesAnalyzed: number;

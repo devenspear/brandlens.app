@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
         url: validated.url,
         email: validated.email,
         region: validated.region,
+        humanBrandStatement: validated.humanBrandStatement,
         status: 'PENDING',
       },
     });

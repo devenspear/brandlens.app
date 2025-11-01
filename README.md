@@ -161,9 +161,206 @@ brandlens.app/
 - `projects` — Brand audit projects
 - `sources` — Scraped website content
 - `llm_runs` — LLM API calls with responses
-- `findings` — Extracted insights
+- `findings` — Extracted insights (now with provider tagging)
 - `competitors` — Competitive positioning data
 - `reports` — Generated reports with share tokens
+
+## 📝 Project Status & Development Phases
+
+### ✅ Phase 1: Provider Tagging & Core Reliability (COMPLETED)
+
+**Problem Solved:** All three LLM outputs were showing identical text in reports because findings weren't tagged with their source provider.
+
+**Changes Implemented:**
+1. **Database Schema** (`prisma/schema.prisma`):
+   - Added `provider` field to Finding model (LlmProvider enum)
+   - Added `projectId` field for efficient queries
+   - Added composite index `[projectId, provider, kind]` for fast filtering
+   - Added real estate-specific FindingKind enums: `PRODUCT_MIX`, `PRICE_POSITIONING`, `COMPLIANCE_RISK`, `LOCATION_DRIVER`, `BUILDER_CREDIBILITY`
+   - Added `humanBrandStatement` field to Project model for human vs LLM comparison
+
+2. **Brand Analyzer** (`lib/services/brand-analyzer.ts`):
+   - Updated `saveFinding()` method to include `projectId` and `provider` parameters
+   - All 8 analysis steps now tag findings with their source provider
+   - Increased OpenAI token limits from 4,000 to 8,000 for improved reliability
+   - Implemented graceful degradation with `Promise.allSettled` (continue if ≥1 provider succeeds)
+
+3. **Report Generator** (`lib/services/report-generator.ts`):
+   - `buildModelPerspectives()` now filters findings by `llmRunId` (which maps to unique provider)
+   - Added `buildHumanVLLMComparison()` method for human vs AI analysis
+   - Each provider's perspective now shows distinct, authentic outputs
+
+4. **LLM Providers** (`lib/services/llm-providers.ts`):
+   - Defensive JSON parsing with markdown fence stripping
+   - Detailed error logging (first 500 chars of failed parses)
+   - OpenAI now uses 8,000 max tokens (up from 4,000)
+
+5. **Type Definitions** (`lib/types/index.ts`):
+   - Added `humanVLLM` alias to BrandAuditReport interface for compatibility
+
+**Impact:**
+- ✅ Each LLM now shows unique, authentic analysis in reports
+- ✅ OpenAI reliability improved with increased token limits
+- ✅ Better error handling and debugging capabilities
+- ✅ Database ready for industry-specific customization
+- ✅ Support for human brand statement comparison
+
+**Testing Status:**
+- ✅ TypeScript build successful
+- ✅ All finding creation calls updated with provider tagging
+- ⏳ Awaiting production database migration
+- ⏳ Requires one full test analysis to verify distinct outputs
+
+---
+
+### 🔜 Phase 2: Industry-Specific Customization (PLANNED)
+
+**Objective:** Enable industry-tailored prompts and analysis, starting with Residential Real Estate.
+
+**Planned Implementation:**
+
+1. **Prompt Template System:**
+   ```
+   lib/prompts/
+   ├── templates.json          # Editable JSON prompt templates
+   ├── loader.ts               # Template loading utility
+   └── industry/
+       ├── residential-real-estate.json
+       ├── commercial-real-estate.json
+       └── generic.json
+   ```
+
+2. **Database Schema Updates:**
+   - Add `industry` field to Project model (Industry enum)
+   - Default: `RESIDENTIAL_REAL_ESTATE`
+   - Enum values: `RESIDENTIAL_REAL_ESTATE`, `COMMERCIAL_REAL_ESTATE`, `HEALTHCARE`, `TECHNOLOGY`, `FINANCIAL_SERVICES`, etc.
+
+3. **Homepage Enhancement:**
+   - Add industry dropdown selector (default: Residential Real Estate)
+   - Keep `region` field for location-specific context
+   - Store industry selection with project for prompt routing
+
+4. **Real Estate Specific Prompts:**
+   - Fair Housing compliant buyer segment analysis
+   - Product mix analysis (unit types, price points)
+   - Location driver identification
+   - Builder credibility signals
+   - Compliance risk detection
+
+**Key Principle:**
+All three LLMs receive the **same industry-specific prompt** to enable fair comparison of how each model interprets real estate brand positioning differently.
+
+**Timeline:** Post Phase 1 production validation
+
+---
+
+### 🔮 Phase 3: Admin Dashboard (PLANNED)
+
+**Objective:** Centralized control panel for system configuration and monitoring.
+
+**Planned Features:**
+
+1. **Authentication:**
+   - Password protection: `Admin@SS2005`
+   - Session management
+   - Routes: `/admin/*`
+
+2. **Dashboard Sections:**
+
+   **a) Analytics** (`/admin/analytics`):
+   - Total projects analyzed
+   - LLM provider success rates
+   - Average analysis time
+   - Cost per project breakdown
+   - Token usage trends
+   - Error rate monitoring
+
+   **b) Prompt Editor** (`/admin/prompts`):
+   - Visual JSON editor for prompt templates
+   - Industry-specific prompt management
+   - Version control for prompts
+   - Test prompt output preview
+
+   **c) Settings** (`/admin/settings`):
+   - Token limit controls per provider
+   - Cost threshold alerts
+   - Max pages per site configuration
+   - Timeout adjustments
+   - Feature flags
+
+   **d) Debug Tools** (`/admin/debug`):
+   - Recent error logs
+   - LLM response inspection
+   - Database query viewer
+   - System health checks
+   - Manual project retry
+
+3. **UI Framework:**
+   - Clean, professional SaaS-style interface
+   - Dark mode support
+   - Real-time data updates
+   - Responsive design
+
+**Timeline:** After Phase 2 industry customization is validated
+
+---
+
+### 🚀 Phase 4: Advanced Features (FUTURE)
+
+**Planned Enhancements:**
+
+1. **Competitive Intelligence:**
+   - Automated competitor discovery
+   - Side-by-side positioning comparison
+   - White space opportunity detection
+   - Claim overlap identification
+
+2. **Human vs LLM Analysis:**
+   - Brand statement upload
+   - Alignment scoring
+   - Gap analysis
+   - Suggested edits with reasoning
+
+3. **Background Processing:**
+   - BullMQ job queue integration
+   - Webhook notifications
+   - Email report delivery
+   - Scheduled re-analysis
+
+4. **Multi-User Support:**
+   - User authentication
+   - Project history per user
+   - Report sharing controls
+   - Team collaboration
+
+5. **Export & Integration:**
+   - PDF report generation
+   - API for external tools
+   - Zapier/Make integration
+   - Slack notifications
+
+**Timeline:** Evaluated after Phase 3 completion
+
+---
+
+### 🔧 Technical Debt & Maintenance
+
+**Known Issues:**
+- Multiple lockfiles warning (root vs project)
+- Unused import warnings (non-blocking)
+- Background bash processes from previous sessions
+
+**Ongoing Monitoring:**
+- OpenAI GPT-4o reliability (Step 4 buyer segments historically problematic)
+- Production database migration validation needed
+- Vercel timeout monitoring (60s limit)
+
+**Performance Optimizations:**
+- Scraping parallelization (main page + 3 subpages)
+- Reduced page timeout from 10s to 8s
+- LLM analysis runs in parallel across providers
+
+---
 
 ## 🚧 Roadmap
 

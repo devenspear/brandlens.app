@@ -11,16 +11,17 @@ datasource db {
 }
 
 model Project {
-  id               String   @id @default(cuid())
-  url              String
-  email            String
-  region           String?
-  createdBy        String?
-  status           ProjectStatus @default(PENDING)
-  progressMessage  String?  @default("Initializing...")
-  progressPercent  Int?     @default(0)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                   String   @id @default(cuid())
+  url                  String
+  email                String
+  region               String?
+  humanBrandStatement  String?  @db.Text
+  createdBy            String?
+  status               ProjectStatus @default(PENDING)
+  progressMessage      String?  @default("Initializing...")
+  progressPercent      Int?     @default(0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
 
   // Relations
   sources     Source[]
@@ -32,6 +33,7 @@ model Project {
   @@index([status])
   @@index([createdAt])
   @@index([email])
+
 }
 
 model Source {
@@ -67,6 +69,7 @@ model LlmRun {
   createdAt   DateTime @default(now())
 
   project     Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  findings    Finding[]
 
   @@index([projectId])
   @@index([provider])
@@ -74,18 +77,24 @@ model LlmRun {
 }
 
 model Finding {
-  id           String   @id @default(cuid())
+  id           String      @id @default(cuid())
   projectId    String
+  llmRunId     String
+  provider     LlmProvider
   kind         FindingKind
   value        Json
-  evidenceRef  String?  @db.Text
+  evidenceRef  String?     @db.Text
   confidence   Float?
-  createdAt    DateTime @default(now())
+  createdAt    DateTime    @default(now())
 
-  project      Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  project      Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  llmRun       LlmRun      @relation(fields: [llmRunId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+  @@index([llmRunId])
+  @@index([provider])
   @@index([kind])
+  @@index([projectId, provider, kind])
 }
 
 model Competitor {
@@ -165,4 +174,24 @@ enum FindingKind {
   SPECIFICITY_SCORE
   DIFFERENTIATION_SCORE
   TRUST_SCORE
+  // Real Estate Specific
+  PRODUCT_MIX
+  PRICE_POSITIONING
+  COMPLIANCE_RISK
+  LOCATION_DRIVER
+  BUILDER_CREDIBILITY
+}
+
+enum Industry {
+  RESIDENTIAL_REAL_ESTATE
+  COMMERCIAL_REAL_ESTATE
+  HEALTHCARE
+  TECHNOLOGY
+  FINANCIAL_SERVICES
+  RETAIL
+  HOSPITALITY
+  MANUFACTURING
+  EDUCATION
+  PROFESSIONAL_SERVICES
+  OTHER
 }

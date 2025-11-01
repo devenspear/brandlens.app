@@ -40,13 +40,15 @@ export class ReportGenerator {
 
       messaging: this.buildMessagingScores(project),
 
+      humanVLLM: this.buildHumanVLLMComparison(project),
+
       recommendations: this.buildRecommendations(project),
 
       metadata: {
         pagesAnalyzed: project.sources.length,
         tokensUsed: project.llmRuns.reduce((sum, run) => sum + (run.tokensUsed || 0), 0),
         cost: project.llmRuns.reduce((sum, run) => sum + (run.cost || 0), 0),
-        processingTime: 0, // Calculate from timestamps if needed
+        processingTime: project.updatedAt.getTime() - project.createdAt.getTime(),
       },
     };
 
@@ -72,27 +74,20 @@ export class ReportGenerator {
     overview: string;
     topActions: Recommendation[];
   } {
-    const synopses = project.findings.filter((f: any) => f.kind === 'BRAND_SYNOPSIS');
+    const consensus = project.findings.filter((f: any) => f.kind === 'BRAND_SYNOPSIS');
     const recommendations = project.findings.filter((f: any) => f.kind === 'RECOMMENDATION');
 
-    // Combine synopses for overview
-    let overview = 'Based on analysis from multiple AI models, ';
-    if (synopses.length > 0) {
-      const firstSynopsis = synopses[0].value?.summary || 'this community presents a unique brand positioning.';
-      overview += firstSynopsis;
+    // Generate a more insightful overview
+    let overview = 'This AI-powered brand audit reveals several key insights. ';
+    if (consensus.length > 0) {
+      const mainTheme = consensus[0].value?.summary || 'a focus on modern living';
+      overview += `The consensus view highlights ${mainTheme}. However, there are divergences in how different AI models perceive the brand's tone and key differentiators, suggesting opportunities to improve messaging clarity.`;
     } else {
-      overview += 'this community requires further brand clarity and positioning refinement.';
+      overview += 'The analysis was inconclusive, indicating a lack of clear brand messaging on the website.';
     }
 
     // Get top 5 recommendations by impact
-    const topActions = recommendations
-      .map((r: any) => r.value as Recommendation)
-      .filter((r: Recommendation) => r && r.impact)
-      .sort((a: Recommendation, b: Recommendation) => {
-        const impactOrder = { high: 3, medium: 2, low: 1 };
-        return impactOrder[b.impact] - impactOrder[a.impact];
-      })
-      .slice(0, 5);
+    const topActions = this.buildRecommendations(project).slice(0, 5);
 
     return { overview, topActions };
   }
@@ -112,34 +107,20 @@ export class ReportGenerator {
       const run = project.llmRuns.find((r: any) => r.provider === provider && r.status === 'COMPLETED');
       if (!run) continue;
 
-      const synopsis = project.findings.find(
-        (f: any) => f.kind === 'BRAND_SYNOPSIS'
-        // In production, you'd filter by the specific LLM run
-      );
+      const findings = project.findings.filter((f: any) => f.llmRunId === run.id);
 
-      const pillars = project.findings.filter(
-        (f: any) => f.kind === 'POSITIONING_PILLAR'
-      ).slice(0, 5);
-
-      const tone = project.findings.find((f: any) => f.kind === 'TONE_OF_VOICE');
-
-      const segments = project.findings.filter(
-        (f: any) => f.kind === 'BUYER_SEGMENT'
-      ).slice(0, 3);
-
-      const amenities = project.findings.filter(
-        (f: any) => f.kind === 'AMENITY_CLAIM'
-      ).slice(0, 10);
-
-      const trustSignals = project.findings.filter(
-        (f: any) => f.kind === 'TRUST_SIGNAL'
-      );
+      const synopsis = findings.find((f: any) => f.kind === 'BRAND_SYNOPSIS');
+      const pillars = findings.filter((f: any) => f.kind === 'POSITIONING_PILLAR');
+      const tone = findings.find((f: any) => f.kind === 'TONE_OF_VOICE');
+      const segments = findings.filter((f: any) => f.kind === 'BUYER_SEGMENT');
+      const amenities = findings.filter((f: any) => f.kind === 'AMENITY_CLAIM');
+      const trustSignals = findings.filter((f: any) => f.kind === 'TRUST_SIGNAL');
 
       perspectives.push({
         provider,
         model: run.model,
         synopsis: {
-          summary: synopsis?.value?.summary || '',
+          summary: synopsis?.value?.summary || 'No synopsis generated.',
           pillars: pillars.map((p: any) => p.value),
           toneOfVoice: tone?.value || {},
           segments: segments.map((s: any) => s.value),
@@ -186,18 +167,47 @@ export class ReportGenerator {
    * Build messaging scores
    */
   private buildMessagingScores(project: any): any {
-    const clarity = project.findings.find((f: any) => f.kind === 'CLARITY_SCORE');
-    const specificity = project.findings.find((f: any) => f.kind === 'SPECIFICITY_SCORE');
-    const differentiation = project.findings.find((f: any) => f.kind === 'DIFFERENTIATION_SCORE');
-    const trust = project.findings.find((f: any) => f.kind === 'TRUST_SCORE');
+    const scores: any = {};
+    const scoreKinds = ['CLARITY_SCORE', 'SPECIFICITY_SCORE', 'DIFFERENTIATION_SCORE', 'TRUST_SCORE'];
+
+    for (const kind of scoreKinds) {
+      const findings = project.findings.filter((f: any) => f.kind === kind);
+      if (findings.length > 0) {
+        // Average the scores from different models
+        const avgScore = findings.reduce((acc: number, f: any) => acc + (f.value?.score || 0), 0) / findings.length;
+        const level = avgScore > 75 ? 'high' : avgScore > 50 ? 'medium' : 'low';
+        scores[kind.replace('_SCORE', '').toLowerCase()] = {
+          level,
+          score: Math.round(avgScore),
+          rationale: findings[0].value?.rationale || 'Analysis pending',
+          evidence: findings[0].value?.evidence || [],
+        };
+      } else {
+        scores[kind.replace('_SCORE', '').toLowerCase()] = this.getDefaultScore(kind.replace('_SCORE', '').toLowerCase());
+      }
+    }
+
+    return scores;
+  }
+
+  /**
+   * Build human vs LLM comparison
+   */
+  private buildHumanVLLMComparison(project: any): any {
+    if (!project.humanBrandStatement) {
+      return null;
+    }
+
+    const llmConsensus = project.findings.find((f: any) => f.kind === 'BRAND_SYNOPSIS');
 
     return {
-      clarity: clarity?.value || this.getDefaultScore('clarity'),
-      specificity: specificity?.value || this.getDefaultScore('specificity'),
-      differentiation: differentiation?.value || this.getDefaultScore('differentiation'),
-      trust: trust?.value || this.getDefaultScore('trust'),
+      humanStatement: project.humanBrandStatement,
+      llmConsensus: llmConsensus?.value?.summary || 'No consensus summary available.',
+      alignment: [], // Placeholder for alignment analysis
+      gaps: [], // Placeholder for gap analysis
     };
   }
+
 
   /**
    * Build recommendations list

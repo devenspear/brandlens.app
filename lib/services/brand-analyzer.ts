@@ -186,8 +186,10 @@ export class BrandAnalyzer {
       provider,
       model: this.getDefaultModel(provider),
       temperature: 0.3,
-      maxTokens: 4000,
+      maxTokens: provider === LlmProvider.OPENAI ? 8000 : 4000, // Increased for OpenAI reliability
     };
+
+    let llmRun: any;
 
     try {
       const startTime = Date.now();
@@ -199,9 +201,11 @@ export class BrandAnalyzer {
       const synopsisResult = await llmProvider.analyze(synopsisPrompt, config);
       console.log(`[${provider}] ✅ Step 1/8: Brand synopsis complete (${Date.now() - synopsisStart}ms, ${synopsisResult.tokensUsed} tokens, $${(synopsisResult.cost || 0).toFixed(4)})`);
 
-      await this.saveLLMRun(projectId, provider, config, synopsisResult);
+      llmRun = await this.saveLLMRun(projectId, provider, config, synopsisResult);
       await this.saveFinding(
         projectId,
+        llmRun.id,
+        provider,
         'BRAND_SYNOPSIS',
         synopsisResult.content,
         synopsisPrompt
@@ -214,14 +218,13 @@ export class BrandAnalyzer {
       const pillarsResult = await llmProvider.analyze(pillarsPrompt, config);
       console.log(`[${provider}] ✅ Step 2/8: Positioning pillars complete (${Date.now() - pillarsStart}ms, ${pillarsResult.tokensUsed} tokens, $${(pillarsResult.cost || 0).toFixed(4)})`);
 
-      await this.saveLLMRun(projectId, provider, config, pillarsResult);
-      // Handle both array and object responses
+      llmRun = await this.saveLLMRun(projectId, provider, config, pillarsResult);
       const pillars = Array.isArray(pillarsResult.content)
         ? pillarsResult.content
         : (pillarsResult.content as any)?.pillars || [];
       console.log(`[${provider}] 💾 Saved ${pillars.length} positioning pillars`);
       for (const pillar of pillars) {
-        await this.saveFinding(projectId, 'POSITIONING_PILLAR', pillar, pillarsPrompt);
+        await this.saveFinding(projectId, llmRun.id, provider, 'POSITIONING_PILLAR', pillar, pillarsPrompt);
       }
 
       // 3. Tone of Voice
@@ -231,9 +234,8 @@ export class BrandAnalyzer {
       const toneResult = await llmProvider.analyze(tonePrompt, config);
       console.log(`[${provider}] ✅ Step 3/8: Tone of voice complete (${Date.now() - toneStart}ms, ${toneResult.tokensUsed} tokens, $${(toneResult.cost || 0).toFixed(4)})`);
 
-
-      await this.saveLLMRun(projectId, provider, config, toneResult);
-      await this.saveFinding(projectId, 'TONE_OF_VOICE', toneResult.content, tonePrompt);
+      llmRun = await this.saveLLMRun(projectId, provider, config, toneResult);
+      await this.saveFinding(projectId, llmRun.id, provider, 'TONE_OF_VOICE', toneResult.content, tonePrompt);
 
       // 4. Buyer Segments
       console.log(`[${provider}] ⏱️  Step 4/8: Starting buyer segments analysis...`);
@@ -242,13 +244,13 @@ export class BrandAnalyzer {
       const segmentsResult = await llmProvider.analyze(segmentsPrompt, config);
       console.log(`[${provider}] ✅ Step 4/8: Buyer segments complete (${Date.now() - segmentsStart}ms, ${segmentsResult.tokensUsed} tokens, $${(segmentsResult.cost || 0).toFixed(4)})`);
 
-      await this.saveLLMRun(projectId, provider, config, segmentsResult);
+      llmRun = await this.saveLLMRun(projectId, provider, config, segmentsResult);
       const segments = Array.isArray(segmentsResult.content)
         ? segmentsResult.content
         : (segmentsResult.content as any)?.segments || [];
       console.log(`[${provider}] 💾 Saved ${segments.length} buyer segments`);
       for (const segment of segments) {
-        await this.saveFinding(projectId, 'BUYER_SEGMENT', segment, segmentsPrompt);
+        await this.saveFinding(projectId, llmRun.id, provider, 'BUYER_SEGMENT', segment, segmentsPrompt);
       }
 
       // 5. Amenities
@@ -258,13 +260,13 @@ export class BrandAnalyzer {
       const amenitiesResult = await llmProvider.analyze(amenitiesPrompt, config);
       console.log(`[${provider}] ✅ Step 5/8: Amenity claims complete (${Date.now() - amenitiesStart}ms, ${amenitiesResult.tokensUsed} tokens, $${(amenitiesResult.cost || 0).toFixed(4)})`);
 
-      await this.saveLLMRun(projectId, provider, config, amenitiesResult);
+      llmRun = await this.saveLLMRun(projectId, provider, config, amenitiesResult);
       const amenities = Array.isArray(amenitiesResult.content)
         ? amenitiesResult.content
         : (amenitiesResult.content as any)?.amenities || [];
       console.log(`[${provider}] 💾 Saved ${amenities.length} amenities`);
       for (const amenity of amenities) {
-        await this.saveFinding(projectId, 'AMENITY_CLAIM', amenity, amenitiesPrompt);
+        await this.saveFinding(projectId, llmRun.id, provider, 'AMENITY_CLAIM', amenity, amenitiesPrompt);
       }
 
       // 6. Trust Signals
@@ -274,13 +276,13 @@ export class BrandAnalyzer {
       const trustResult = await llmProvider.analyze(trustPrompt, config);
       console.log(`[${provider}] ✅ Step 6/8: Trust signals complete (${Date.now() - trustStart}ms, ${trustResult.tokensUsed} tokens, $${(trustResult.cost || 0).toFixed(4)})`);
 
-      await this.saveLLMRun(projectId, provider, config, trustResult);
+      llmRun = await this.saveLLMRun(projectId, provider, config, trustResult);
       const trustSignals = Array.isArray(trustResult.content)
         ? trustResult.content
         : (trustResult.content as any)?.signals || [];
       console.log(`[${provider}] 💾 Saved ${trustSignals.length} trust signals`);
       for (const signal of trustSignals) {
-        await this.saveFinding(projectId, 'TRUST_SIGNAL', signal, trustPrompt);
+        await this.saveFinding(projectId, llmRun.id, provider, 'TRUST_SIGNAL', signal, trustPrompt);
       }
 
       // 7. Messaging Analysis
@@ -290,28 +292,35 @@ export class BrandAnalyzer {
       const messagingResult = await llmProvider.analyze(messagingPrompt, config);
       console.log(`[${provider}] ✅ Step 7/8: Messaging analysis complete (${Date.now() - messagingStart}ms, ${messagingResult.tokensUsed} tokens, $${(messagingResult.cost || 0).toFixed(4)})`);
 
-
-      await this.saveLLMRun(projectId, provider, config, messagingResult);
+      llmRun = await this.saveLLMRun(projectId, provider, config, messagingResult);
       await this.saveFinding(
         projectId,
+        llmRun.id,
+        provider,
         'CLARITY_SCORE',
         messagingResult.content.clarity,
         messagingPrompt
       );
       await this.saveFinding(
         projectId,
+        llmRun.id,
+        provider,
         'SPECIFICITY_SCORE',
         messagingResult.content.specificity,
         messagingPrompt
       );
       await this.saveFinding(
         projectId,
+        llmRun.id,
+        provider,
         'DIFFERENTIATION_SCORE',
         messagingResult.content.differentiation,
         messagingPrompt
       );
       await this.saveFinding(
         projectId,
+        llmRun.id,
+        provider,
         'TRUST_SCORE',
         messagingResult.content.trust,
         messagingPrompt
@@ -329,13 +338,13 @@ export class BrandAnalyzer {
       const recommendationsResult = await llmProvider.analyze(recommendationsPrompt, config);
       console.log(`[${provider}] ✅ Step 8/8: Recommendations complete (${Date.now() - recommendationsStart}ms, ${recommendationsResult.tokensUsed} tokens, $${(recommendationsResult.cost || 0).toFixed(4)})`);
 
-      await this.saveLLMRun(projectId, provider, config, recommendationsResult);
+      llmRun = await this.saveLLMRun(projectId, provider, config, recommendationsResult);
       const recommendations = Array.isArray(recommendationsResult.content)
         ? recommendationsResult.content
         : (recommendationsResult.content as any)?.recommendations || [];
       console.log(`[${provider}] 💾 Saved ${recommendations.length} recommendations`);
       for (const rec of recommendations) {
-        await this.saveFinding(projectId, 'RECOMMENDATION', rec, recommendationsPrompt);
+        await this.saveFinding(projectId, llmRun.id, provider, 'RECOMMENDATION', rec, recommendationsPrompt);
       }
 
       const totalTime = Date.now() - startTime;
@@ -351,19 +360,29 @@ export class BrandAnalyzer {
       console.error(`${provider} analysis failed:`, error);
 
       // Save failed run
-      await prisma.llmRun.create({
-        data: {
-          projectId,
-          provider,
-          model: config.model,
-          temperature: config.temperature,
-          maxTokens: config.maxTokens,
-          settings: config as any,
-          rawResponse: {},
-          status: 'FAILED',
-          error: error instanceof Error ? error.message : 'Unknown error',
-        },
-      });
+      if (llmRun) {
+        await prisma.llmRun.update({
+          where: { id: llmRun.id },
+          data: {
+            status: 'FAILED',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+        });
+      } else {
+        await prisma.llmRun.create({
+          data: {
+            projectId,
+            provider,
+            model: config.model,
+            temperature: config.temperature,
+            maxTokens: config.maxTokens,
+            settings: config as any,
+            rawResponse: {},
+            status: 'FAILED',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+        });
+      }
 
       throw error;
     }
@@ -377,11 +396,11 @@ export class BrandAnalyzer {
     provider: LlmProvider,
     config: LLMConfig,
     result: any
-  ): Promise<void> {
+  ): Promise<any> {
     // Serialize raw response to remove function objects
     const serializedRaw = JSON.parse(JSON.stringify(result.raw));
 
-    await prisma.llmRun.create({
+    return await prisma.llmRun.create({
       data: {
         projectId,
         provider,
@@ -402,6 +421,8 @@ export class BrandAnalyzer {
    */
   private async saveFinding(
     projectId: string,
+    llmRunId: string,
+    provider: LlmProvider,
     kind: string,
     value: any,
     evidence: string
@@ -409,6 +430,8 @@ export class BrandAnalyzer {
     await prisma.finding.create({
       data: {
         projectId,
+        llmRunId,
+        provider,
         kind: kind as any,
         value: value as any,
         evidenceRef: evidence,

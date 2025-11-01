@@ -61,11 +61,41 @@ function CardAction({ className, ...props }: React.ComponentProps<"div">) {
   )
 }
 
+function CardIcon({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-icon"
+      className={cn("col-start-2 row-span-2 row-start-1 self-start justify-self-end", className)}
+      {...props}
+    />
+  )
+}
+
 function CardContent({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-content"
       className={cn("px-6", className)}
+      {...props}
+    />
+  )
+}
+
+function CardBody({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-body"
+      className={cn("px-6", className)}
+      {...props}
+    />
+  )
+}
+
+function CardActions({ className, ...props }: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="card-actions"
+      className={cn("flex items-center px-6 [.border-t]:pt-6", className)}
       {...props}
     />
   )
@@ -89,4 +119,7 @@ export {
   CardAction,
   CardDescription,
   CardContent,
+  CardIcon,
+  CardBody,
+  CardActions,
 }
