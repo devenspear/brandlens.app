@@ -9,35 +9,21 @@ export class WebScraper {
    * Scrape a website and extract relevant content
    */
   async scrapeWebsite(url: string): Promise<ScrapeResult> {
+    const normalizedUrl = this.normalizeUrl(url);
+    let mainPage: ScrapedPage;
+
+    // Try to scrape main page
     try {
-      // Normalize URL
-      const normalizedUrl = this.normalizeUrl(url);
-
-      // Scrape main page
-      const mainPage = await this.scrapePage(normalizedUrl, 'MAIN_PAGE');
-
-      // Find and scrape subpages in parallel for speed
-      const subPageUrls = this.extractSubPages(normalizedUrl, mainPage);
-      const subPagePromises = subPageUrls.slice(0, MAX_PAGES - 1).map(async (subPageUrl) => {
-        try {
-          return await this.scrapePage(subPageUrl.url, subPageUrl.type);
-        } catch (error) {
-          console.error(`Failed to scrape ${subPageUrl.url}:`, error);
-          return null;
-        }
-      });
-
-      const subPageResults = await Promise.all(subPagePromises);
-      const subPages = subPageResults.filter((page): page is ScrapedPage => page !== null);
-
-      return {
-        mainPage,
-        subPages,
-      };
+      mainPage = await this.scrapePage(normalizedUrl, 'MAIN_PAGE');
+      console.log(`✅ Main page scraped: ${normalizedUrl}`);
     } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error(`❌ Main page failed: ${normalizedUrl} - ${errorMsg}`);
+
+      // Main page is critical - return error
       return {
         mainPage: {
-          url,
+          url: normalizedUrl,
           type: 'MAIN_PAGE',
           title: 'Error',
           content: '',
@@ -45,9 +31,38 @@ export class WebScraper {
           metadata: {},
         },
         subPages: [],
-        error: error instanceof Error ? error.message : 'Unknown error',
+        error: `Main page inaccessible: ${errorMsg}`,
       };
     }
+
+    // Find and scrape subpages in parallel (non-critical)
+    const subPageUrls = this.extractSubPages(normalizedUrl, mainPage);
+    console.log(`🔍 Found ${subPageUrls.length} potential subpages, attempting to scrape ${Math.min(subPageUrls.length, MAX_PAGES - 1)}...`);
+
+    const subPagePromises = subPageUrls.slice(0, MAX_PAGES - 1).map(async (subPageUrl) => {
+      try {
+        const page = await this.scrapePage(subPageUrl.url, subPageUrl.type);
+        console.log(`✅ Subpage scraped: ${subPageUrl.url}`);
+        return page;
+      } catch (error) {
+        console.warn(`⚠️  Subpage timeout (continuing): ${subPageUrl.url}`);
+        return null;
+      }
+    });
+
+    const subPageResults = await Promise.all(subPagePromises);
+    const subPages = subPageResults.filter((page): page is ScrapedPage => page !== null);
+
+    const failedCount = subPageResults.length - subPages.length;
+    if (failedCount > 0) {
+      console.log(`⚠️  ${failedCount} of ${subPageResults.length} subpages timed out (continuing with ${subPages.length} pages)`);
+    }
+
+    return {
+      mainPage,
+      subPages,
+      warning: failedCount > 0 ? `${failedCount} page(s) timed out and were skipped` : undefined,
+    };
   }
 
   /**

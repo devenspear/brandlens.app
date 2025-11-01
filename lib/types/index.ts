@@ -209,4 +209,5 @@ export interface ScrapeResult {
   mainPage: ScrapedPage;
   subPages: ScrapedPage[];
   error?: string;
+  warning?: string;
 }

@@ -56,11 +56,21 @@ export class BrandAnalyzer {
       console.log(`\n🌐 SCRAPING: ${project.url}`);
       const scrapeStart = Date.now();
       const scrapeResult = await webScraper.scrapeWebsite(project.url);
-      console.log(`✅ SCRAPING COMPLETE: ${Date.now() - scrapeStart}ms | Main page + ${scrapeResult.subPages.length} subpages`);
-      await this.updateProgress(projectId, `Scraped ${scrapeResult.subPages.length + 1} pages successfully`, 10);
+      const totalPages = scrapeResult.subPages.length + 1;
+      console.log(`✅ SCRAPING COMPLETE: ${Date.now() - scrapeStart}ms | ${totalPages} page(s) scraped`);
 
+      // Check for critical errors (main page failed)
       if (scrapeResult.error) {
+        console.error(`❌ SCRAPING FAILED: ${scrapeResult.error}`);
         throw new Error(`Scraping failed: ${scrapeResult.error}`);
+      }
+
+      // Log warnings for partial results
+      if (scrapeResult.warning) {
+        console.warn(`⚠️  PARTIAL SCRAPING: ${scrapeResult.warning}`);
+        await this.updateProgress(projectId, `Scraped ${totalPages} page(s) - ${scrapeResult.warning}`, 10);
+      } else {
+        await this.updateProgress(projectId, `Scraped ${totalPages} page(s) successfully`, 10);
       }
 
       // Save sources
