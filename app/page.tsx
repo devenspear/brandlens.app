@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
 import { ProgressTracker } from '@/components/analysis/ProgressTracker';
+import { getVersionString } from '@/lib/utils/version';
 
 export default function Home() {
   const router = useRouter();
@@ -250,6 +251,13 @@ export default function Home() {
             ))}
           </div>
         </div>
+
+        {/* Version Footer */}
+        <footer className="mt-16 pb-8 text-center">
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            BrandLens {getVersionString()} | AI-Powered Brand Analysis
+          </p>
+        </footer>
       </div>
     </div>
   );
