@@ -74,7 +74,7 @@ const ModelPerspectives: FC<ModelPerspectivesProps> = ({ perspectives }) => {
                   )}
 
                   {/* Brand Pillars */}
-                  {perspective.synopsis?.pillars && perspective.synopsis.pillars.length > 0 && (
+                  {perspective.synopsis?.pillars && Array.isArray(perspective.synopsis.pillars) && perspective.synopsis.pillars.length > 0 ? (
                     <div>
                       <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">
                         Brand Pillars
@@ -84,11 +84,15 @@ const ModelPerspectives: FC<ModelPerspectivesProps> = ({ perspectives }) => {
                           <li key={i} className="flex items-start gap-2 text-sm">
                             <span className="text-gray-400 mt-0.5">▪</span>
                             <span className="text-gray-800 font-medium">
-                              {pillar.name || pillar}
+                              {typeof pillar === 'string' ? pillar : (pillar.name || pillar.description || JSON.stringify(pillar))}
                             </span>
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  ) : (
+                    <div className="text-xs text-gray-400 italic">
+                      No brand pillars identified for this provider
                     </div>
                   )}
                 </>
