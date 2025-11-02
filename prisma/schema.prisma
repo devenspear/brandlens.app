@@ -79,8 +79,8 @@ model LlmRun {
 model Finding {
   id           String      @id @default(cuid())
   projectId    String
-  llmRunId     String
-  provider     LlmProvider
+  llmRunId     String?
+  provider     LlmProvider?
   kind         FindingKind
   value        Json
   evidenceRef  String?     @db.Text
@@ -88,7 +88,7 @@ model Finding {
   createdAt    DateTime    @default(now())
 
   project      Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  llmRun       LlmRun      @relation(fields: [llmRunId], references: [id], onDelete: Cascade)
+  llmRun       LlmRun?     @relation(fields: [llmRunId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
   @@index([llmRunId])
