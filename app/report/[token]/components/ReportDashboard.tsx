@@ -77,9 +77,10 @@ const ReportDashboard: FC<ReportDashboardProps> = ({ report }) => {
           // Check if perspective exists and has meaningful content
           const hasData = !!perspective &&
             typeof perspective === 'object' &&
+            !Array.isArray(perspective) &&
             Object.keys(perspective).length > 0 &&
-            // Check for either synopsis or any other meaningful data
-            (perspective.synopsis || perspective.brandSynopsis || perspective.positioning || Object.keys(perspective).some(key => key !== 'model'));
+            // Type guard: check if it has a synopsis property
+            ('synopsis' in perspective || 'brandSynopsis' in perspective || 'positioning' in perspective);
 
           return (
             <div
