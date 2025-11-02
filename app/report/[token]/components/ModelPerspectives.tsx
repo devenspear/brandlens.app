@@ -6,11 +6,11 @@ interface ModelPerspectivesProps {
 }
 
 const ModelPerspectives: FC<ModelPerspectivesProps> = ({ perspectives }) => {
-  // Define all providers we want to show
+  // Define all providers we want to show with color theming
   const allProviders = [
-    { key: 'ANTHROPIC', name: 'Anthropic', icon: '🟣' },
-    { key: 'OPENAI', name: 'OpenAI', icon: '🟢' },
-    { key: 'GOOGLE', name: 'Google', icon: '🔵' }
+    { key: 'ANTHROPIC', name: 'Anthropic', icon: '🟣', color: 'purple', bgGradient: 'from-purple-50 to-white', borderColor: 'border-purple-300', textColor: 'text-purple-700', badgeBg: 'bg-purple-100', badgeText: 'text-purple-700' },
+    { key: 'OPENAI', name: 'OpenAI', icon: '🟢', color: 'green', bgGradient: 'from-green-50 to-white', borderColor: 'border-green-300', textColor: 'text-green-700', badgeBg: 'bg-green-100', badgeText: 'text-green-700' },
+    { key: 'GOOGLE', name: 'Google', icon: '🔵', color: 'blue', bgGradient: 'from-blue-50 to-white', borderColor: 'border-blue-300', textColor: 'text-blue-700', badgeBg: 'bg-blue-100', badgeText: 'text-blue-700' }
   ];
 
   return (
@@ -32,18 +32,18 @@ const ModelPerspectives: FC<ModelPerspectivesProps> = ({ perspectives }) => {
           return (
             <div
               key={providerInfo.key}
-              className={`border-2 rounded-lg p-6 ${
+              className={`border-2 rounded-xl p-6 shadow-sm transition-all ${
                 isAvailable
-                  ? 'border-gray-400 bg-white'
+                  ? `bg-gradient-to-br ${providerInfo.bgGradient} ${providerInfo.borderColor} hover:shadow-md`
                   : 'border-gray-200 bg-gray-50 print:bg-gray-100'
-              }`}
+              } print:border-gray-400 print:shadow-none`}
             >
               {/* Provider Header */}
-              <div className="flex items-center justify-between mb-4 pb-3 border-b-2 border-gray-300">
+              <div className={`flex items-center justify-between mb-4 pb-3 border-b-2 ${isAvailable ? providerInfo.borderColor : 'border-gray-300'}`}>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">{providerInfo.icon}</span>
                   <div>
-                    <h3 className="text-lg font-bold text-gray-900 uppercase tracking-wide">
+                    <h3 className={`text-lg font-bold uppercase tracking-wide ${isAvailable ? providerInfo.textColor : 'text-gray-900'}`}>
                       {providerInfo.name}
                     </h3>
                     {isAvailable && perspective && 'model' in perspective && perspective.model && (
@@ -51,8 +51,8 @@ const ModelPerspectives: FC<ModelPerspectivesProps> = ({ perspectives }) => {
                     )}
                   </div>
                 </div>
-                <div className={`px-2 py-1 rounded text-xs font-bold ${
-                  isAvailable ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-500'
+                <div className={`px-2 py-1 rounded-lg text-xs font-bold shadow-sm ${
+                  isAvailable ? `${providerInfo.badgeBg} ${providerInfo.badgeText}` : 'bg-gray-200 text-gray-500'
                 }`}>
                   {isAvailable ? '✓ AVAILABLE' : '✗ N/A'}
                 </div>
