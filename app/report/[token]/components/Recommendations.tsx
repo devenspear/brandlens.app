@@ -24,9 +24,9 @@ const Recommendations: FC<RecommendationsProps> = ({ recommendations }) => {
     <div className="border-2 border-gray-300 rounded-lg p-8 bg-white print:border-gray-400">
       {/* Header */}
       <div className="border-b-2 border-gray-900 pb-4 mb-6">
-        <h2 className="text-3xl font-bold text-gray-900">Strategic Recommendations</h2>
+        <h2 className="text-3xl font-bold text-gray-900">AI-Recommended Actions</h2>
         <p className="text-sm text-gray-600 mt-2">
-          Actionable insights prioritized by impact and effort
+          Suggested improvements from AI analysis, prioritized by potential impact and effort
         </p>
       </div>
 

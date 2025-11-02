@@ -74,7 +74,13 @@ const ReportDashboard: FC<ReportDashboardProps> = ({ report }) => {
       <div className="mt-6 grid grid-cols-3 gap-3">
         {['ANTHROPIC', 'OPENAI', 'GOOGLE'].map((model) => {
           const perspective = report.modelPerspectives[model as keyof typeof report.modelPerspectives];
-          const hasData = !!perspective && typeof perspective === 'object' && 'model' in perspective;
+          // Check if perspective exists and has meaningful content
+          const hasData = !!perspective &&
+            typeof perspective === 'object' &&
+            Object.keys(perspective).length > 0 &&
+            // Check for either synopsis or any other meaningful data
+            (perspective.synopsis || perspective.brandSynopsis || perspective.positioning || Object.keys(perspective).some(key => key !== 'model'));
+
           return (
             <div
               key={model}
@@ -86,7 +92,7 @@ const ReportDashboard: FC<ReportDashboardProps> = ({ report }) => {
             >
               <div className="text-xs font-mono font-bold text-gray-700">{model}</div>
               <div className={`text-lg font-bold mt-1 ${hasData ? 'text-green-600' : 'text-gray-400'}`}>
-                {hasData ? '✓' : '✗'}
+                {hasData ? '✓ Available' : 'No Data'}
               </div>
             </div>
           );

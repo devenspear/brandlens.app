@@ -14,7 +14,6 @@ export default function Home() {
   const [email, setEmail] = useState('');
   const [industry, setIndustry] = useState<Industry>(Industry.RESIDENTIAL_REAL_ESTATE);
   const [region, setRegion] = useState('');
-  const [humanBrandStatement, setHumanBrandStatement] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [projectId, setProjectId] = useState<string | null>(null);
@@ -42,8 +41,7 @@ export default function Home() {
           url: normalizedUrl,
           email,
           industry,
-          region: region || undefined,
-          humanBrandStatement: humanBrandStatement || undefined
+          region: region || undefined
         }),
       });
 
@@ -180,26 +178,6 @@ export default function Home() {
                 placeholder="e.g., Austin, TX"
                 className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-            </div>
-
-            <div>
-              <label
-                htmlFor="humanBrandStatement"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Your Brand Statement (optional)
-              </label>
-              <textarea
-                id="humanBrandStatement"
-                value={humanBrandStatement}
-                onChange={(e) => setHumanBrandStatement(e.target.value)}
-                rows={4}
-                placeholder="Enter your brand statement here..."
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                This will be used for the Human vs. LLM comparison.
-              </p>
             </div>
 
             {error && (
