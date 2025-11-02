@@ -8,7 +8,7 @@ import { getVersionString } from '@/lib/utils/version';
 import { Industry } from '@prisma/client';
 import { getAllIndustries } from '@/lib/prompts/loader';
 
-export default function Home() {
+export default function HomePage() {
   const router = useRouter();
   const [url, setUrl] = useState('');
   const [email, setEmail] = useState('');
@@ -18,8 +18,8 @@ export default function Home() {
   const [error, setError] = useState('');
   const [projectId, setProjectId] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [showHeroForm, setShowHeroForm] = useState(false);
 
-  // Get all industries for the dropdown
   const industries = getAllIndustries();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,7 +28,6 @@ export default function Home() {
     setLoading(true);
 
     try {
-      // Normalize URL - add https:// if no protocol is present
       let normalizedUrl = url.trim();
       if (!/^https?:\/\//i.test(normalizedUrl)) {
         normalizedUrl = `https://${normalizedUrl}`;
@@ -51,8 +50,6 @@ export default function Home() {
       }
 
       const project = await response.json();
-
-      // Instead of redirecting, show progress inline
       setProjectId(project.id);
       setAnalyzing(true);
       setLoading(false);
@@ -63,238 +60,322 @@ export default function Home() {
   };
 
   const handleAnalysisComplete = (reportUrl: string) => {
-    // Redirect to report when analysis is complete
     router.push(reportUrl);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Theme Toggle */}
       <div className="fixed top-4 right-4 z-50">
         <ThemeToggle />
       </div>
 
-      <div className="container mx-auto px-4 py-16 max-w-5xl">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-            Brand Lens
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 mb-4">
-            See how AI reads your community
-          </p>
-          <p className="text-base text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-            Get a comprehensive brand audit showing how multiple frontier LLMs perceive your
-            community's brand, positioning, and promise — based solely on your public website.
-          </p>
-        </div>
-
-        {/* Main Form or Progress Tracker */}
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-12">
-          {analyzing && projectId ? (
-            <ProgressTracker projectId={projectId} onComplete={handleAnalysisComplete} />
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="url"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Website URL *
-              </label>
-              <input
-                type="text"
-                id="url"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="example-community.com"
-                required
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+      {/* HERO SECTION */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 dark:from-blue-900 dark:via-purple-900 dark:to-pink-900">
+        <div className="absolute inset-0 bg-grid-white/10"></div>
+        <div className="container mx-auto px-4 py-20 md:py-32 relative">
+          <div className="max-w-5xl mx-auto text-center">
+            {/* Branding */}
+            <div className="mb-6">
+              <span className="text-white/90 text-sm font-semibold tracking-wider uppercase">
+                BrandLens — The AI Perception Platform
+              </span>
             </div>
 
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Email Address *
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                We'll email you the completed Brand Read report
-              </p>
-            </div>
+            {/* Headline */}
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 leading-tight">
+              See Your Brand Through<br/>the Eyes of AI
+            </h1>
 
-            <div>
-              <label
-                htmlFor="industry"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                Industry Vertical *
-              </label>
-              <select
-                id="industry"
-                value={industry}
-                onChange={(e) => setIndustry(e.target.value as Industry)}
-                required
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                {industries.map((ind) => (
-                  <option
-                    key={ind.value}
-                    value={ind.value}
-                    disabled={!ind.enabled}
+            {/* Subheadline */}
+            <p className="text-xl md:text-2xl text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
+              ChatGPT, Claude, Gemini, and Perplexity already describe your brand.<br/>
+              Run a free test report to see what they say — and how to fix it.
+            </p>
+
+            {/* CTA Button */}
+            <button
+              onClick={() => setShowHeroForm(!showHeroForm)}
+              className="inline-flex items-center gap-3 px-8 py-4 bg-white text-blue-600 font-bold text-lg rounded-xl hover:bg-gray-100 transition-all shadow-2xl hover:shadow-3xl transform hover:scale-105"
+            >
+              <span>🧠</span>
+              Run a Test Report — Free
+            </button>
+
+            <p className="text-white/70 text-sm mt-4">
+              Just enter your website and create your BrandLens account to get started.
+            </p>
+
+            {/* Hero Form (conditional) */}
+            {showHeroForm && !analyzing && (
+              <div className="mt-8 mx-auto max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <input
+                    type="text"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://yourbrand.com"
+                    required
+                    className="w-full px-6 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-lg placeholder-gray-400 focus:ring-4 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    required
+                    className="w-full px-6 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-lg placeholder-gray-400 focus:ring-4 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {error && (
+                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                      <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                    </div>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={loading || !url || !email}
+                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg text-lg"
                   >
-                    {ind.label} {!ind.enabled && '(Coming Soon)'}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Analysis prompts are tailored to your industry. Currently only Residential Real Estate is available.
-              </p>
-            </div>
-
-            <div>
-              <label
-                htmlFor="region"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-              >
-                City/Region (optional)
-              </label>
-              <input
-                type="text"
-                id="region"
-                value={region}
-                onChange={(e) => setRegion(e.target.value)}
-                placeholder="e.g., Austin, TX"
-                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                    {loading ? 'Starting...' : '→ Generate My Report'}
+                  </button>
+                </form>
               </div>
             )}
 
-            <button
-              type="submit"
-              disabled={loading || !url || !email}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-            >
-              {loading ? 'Starting analysis...' : 'Generate Your AI Brand Read'}
-            </button>
-          </form>
-          )}
-
-          {!analyzing && (
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-4 text-center">
-              Public content only. Analysis typically takes 2-5 minutes.
-            </p>
-          )}
-        </div>
-
-        {/* Features */}
-        <div className="grid md:grid-cols-3 gap-8 mb-12">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-lg mb-2 dark:text-white">Multi-Model Analysis</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Get perspectives from OpenAI, Anthropic, and Google AI models
-            </p>
-          </div>
-
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-purple-100 dark:bg-purple-900/30 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-lg mb-2 dark:text-white">Actionable Insights</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Receive specific recommendations to improve your brand clarity
-            </p>
-          </div>
-
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-            <h3 className="font-semibold text-lg mb-2 dark:text-white">Transparent & Ethical</h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Public data only, with full attribution and Fair Housing compliance
-            </p>
+            {/* Progress Tracker */}
+            {analyzing && projectId && (
+              <div className="mt-8 mx-auto max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
+                <ProgressTracker projectId={projectId} onComplete={handleAnalysisComplete} />
+              </div>
+            )}
           </div>
         </div>
+      </section>
 
-        {/* What You'll Get */}
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-8">
-          <h2 className="text-2xl font-bold mb-6 text-center dark:text-white">
+      {/* SECTION 1 — The Why */}
+      <section className="py-20 bg-gray-50 dark:bg-gray-800">
+        <div className="container mx-auto px-4 max-w-4xl text-center">
+          <h2 className="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-6">
+            Your Online Presence Is Already Being Read by AI
+          </h2>
+          <p className="text-xl text-gray-700 dark:text-gray-300 mb-8 leading-relaxed">
+            Large language models now summarize, recommend, and rank every brand online — shaping how customers and investors perceive you.
+            <br/><br/>
+            <strong>BrandLens turns that hidden narrative into data you can manage.</strong>
+          </p>
+          <a
+            href="#try-it"
+            className="inline-block px-8 py-4 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 transition-all"
+          >
+            Understand AI Perception →
+          </a>
+        </div>
+      </section>
+
+      {/* SECTION 2 — Try It Yourself */}
+      <section id="try-it" className="py-20 bg-white dark:bg-gray-900">
+        <div className="container mx-auto px-4 max-w-5xl">
+          <h2 className="text-4xl md:text-5xl font-bold text-center text-gray-900 dark:text-white mb-12">
+            Experience the Power of AI Perception in 60 Seconds
+          </h2>
+
+          <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-4 border-blue-600 dark:border-blue-400 rounded-2xl p-10 mb-12">
+            <h3 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">
+              Run a Free AI Perception Test
+            </h3>
+
+            {!analyzing ? (
+              <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
+                <div>
+                  <input
+                    type="text"
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://yourbrand.com"
+                    required
+                    className="w-full px-6 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-lg placeholder-gray-400 focus:ring-4 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="your@email.com"
+                    required
+                    className="w-full px-6 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-lg placeholder-gray-400 focus:ring-4 focus:ring-blue-500"
+                  />
+                </div>
+
+                {error && (
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                    <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={loading || !url || !email}
+                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-5 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 text-xl shadow-xl flex items-center justify-center gap-2"
+                >
+                  <span>🔍</span>
+                  {loading ? 'Starting Analysis...' : 'Run My Test Report'}
+                </button>
+
+                <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+                  No credit card required. You'll see your AI consensus and top-5 actions instantly.
+                </p>
+              </form>
+            ) : (
+              <div className="max-w-2xl mx-auto">
+                <ProgressTracker projectId={projectId!} onComplete={handleAnalysisComplete} />
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 3 — What You'll Get */}
+      <section className="py-20 bg-gray-50 dark:bg-gray-800">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <h2 className="text-4xl md:text-5xl font-bold text-center text-gray-900 dark:text-white mb-12">
             What You'll Get
           </h2>
-          <div className="space-y-4">
+
+          <div className="grid md:grid-cols-2 gap-8 mb-12">
             {[
-              'Brand synopsis from multiple AI perspectives',
-              'Positioning analysis with competitive context',
-              'Messaging clarity and differentiation scores',
-              'Consensus vs divergence across models',
-              'Amenity inventory (stated vs implied)',
-              'Prioritized recommendations for improvement',
-            ].map((item, index) => (
-              <div key={index} className="flex items-start gap-3">
-                <svg className="w-6 h-6 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span className="text-gray-700 dark:text-gray-300">{item}</span>
+              {
+                title: 'AI Consensus Summary',
+                description: 'How major models describe your brand'
+              },
+              {
+                title: 'Answer Share of Voice',
+                description: 'Where you appear in AI results'
+              },
+              {
+                title: 'Trust & Specificity Score',
+                description: 'Your credibility and clarity vs competitors'
+              },
+              {
+                title: 'Top 5 FixKit Actions',
+                description: 'Exactly how to improve your AI narrative'
+              }
+            ].map((feature, i) => (
+              <div key={i} className="bg-white dark:bg-gray-700 p-8 rounded-xl shadow-lg border-2 border-gray-200 dark:border-gray-600">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{feature.title}</h3>
+                <p className="text-gray-700 dark:text-gray-300">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <a
+              href="#"
+              className="inline-block px-8 py-4 bg-gray-900 dark:bg-white text-white dark:text-gray-900 font-semibold rounded-xl hover:bg-gray-800 dark:hover:bg-gray-100 transition-all"
+            >
+              See Sample Report →
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 4 — How It Works */}
+      <section className="py-20 bg-white dark:bg-gray-900">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <h2 className="text-4xl md:text-5xl font-bold text-center text-gray-900 dark:text-white mb-16">
+            How It Works
+          </h2>
+
+          <div className="grid md:grid-cols-4 gap-8">
+            {[
+              { num: '1', title: 'Enter Your URL', desc: 'BrandLens scans your site across AI models' },
+              { num: '2', title: 'Sign In', desc: 'Create a secure account for report access' },
+              { num: '3', title: 'Get Your Audit', desc: 'Interactive dashboard and downloadable report' },
+              { num: '4', title: 'Apply Actions', desc: 'Boost your AI visibility and trust score' }
+            ].map((step, i) => (
+              <div key={i} className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-full flex items-center justify-center text-2xl font-bold shadow-xl">
+                  {step.num}
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">{step.title}</h3>
+                <p className="text-gray-600 dark:text-gray-400">{step.desc}</p>
               </div>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* Disclaimer */}
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-xl p-6 mt-12">
-          <h3 className="text-lg font-bold text-yellow-900 dark:text-yellow-200 mb-3 flex items-center gap-2">
-            <span>⚠️</span>
-            Important Disclaimer
-          </h3>
-          <div className="text-sm text-yellow-800 dark:text-yellow-300 space-y-2">
-            <p>
-              <strong>BrandLens is a perception analysis tool</strong> that shows how AI models interpret your public website content. This analysis:
-            </p>
-            <ul className="list-disc list-inside space-y-1 ml-4">
-              <li><strong>Is limited by LLM capabilities:</strong> Results reflect AI interpretation, not human expertise or market research</li>
-              <li><strong>Is not data-driven:</strong> Analysis is qualitative and based on public website content only, not traffic, performance metrics, or proprietary data</li>
-              <li><strong>Focuses on perception:</strong> Reports assess brand messaging clarity and AI consensus, not business performance or ROI</li>
-              <li><strong>Is for informational purposes:</strong> Recommendations are AI-generated suggestions, not professional marketing advice</li>
-            </ul>
-            <p className="pt-2">
-              <strong>Legal Notice:</strong> BrandLens complies with Fair Housing laws and does not make discriminatory assessments. All analysis is based solely on publicly available website content. Results should be used as one input among many in your marketing strategy decisions.
-            </p>
+      {/* SECTION 5 — Enterprise & Vertical Packs */}
+      <section className="py-20 bg-gray-50 dark:bg-gray-800">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <h2 className="text-4xl md:text-5xl font-bold text-center text-gray-900 dark:text-white mb-12">
+            Tailored Intelligence for Every Industry
+          </h2>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              { icon: '🏡', title: 'Real Estate (ULI)', desc: 'Discover how communities rank in AI answers' },
+              { icon: '🏨', title: 'Hospitality', desc: 'Measure brand perception in travel-related queries' },
+              { icon: '💻', title: 'SaaS', desc: 'Track your product visibility in AI recommendations' }
+            ].map((vertical, i) => (
+              <div key={i} className="bg-white dark:bg-gray-700 p-8 rounded-xl shadow-lg border-2 border-gray-200 dark:border-gray-600 text-center">
+                <div className="text-5xl mb-4">{vertical.icon}</div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">{vertical.title}</h3>
+                <p className="text-gray-700 dark:text-gray-300 mb-6">{vertical.desc}</p>
+                <button className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all">
+                  Request Demo Report →
+                </button>
+              </div>
+            ))}
           </div>
         </div>
+      </section>
 
-        {/* Version Footer */}
-        <footer className="mt-16 pb-8 text-center">
-          <p className="text-sm text-gray-400 dark:text-gray-500">
-            BrandLens {getVersionString()} | AI-Powered Brand Analysis
+      {/* SECTION 6 — Social Proof */}
+      <section className="py-20 bg-blue-600 dark:bg-blue-900">
+        <div className="container mx-auto px-4 max-w-4xl text-center">
+          <blockquote className="text-2xl md:text-3xl font-medium text-white mb-6 leading-relaxed italic">
+            "We learned exactly what AI thought of our brand — and how to change the narrative."
+          </blockquote>
+          <cite className="text-white/90 text-lg not-italic">
+            — Marketing Director, Lakewood Ranch
+          </cite>
+        </div>
+      </section>
+
+      {/* SECTION 7 — Final Conversion Block */}
+      <section className="py-20 bg-gradient-to-br from-gray-900 to-blue-900 dark:from-black dark:to-blue-950">
+        <div className="container mx-auto px-4 max-w-5xl text-center">
+          <h2 className="text-4xl md:text-6xl font-bold text-white mb-6">
+            Don't Guess What AI Thinks. Know It.
+          </h2>
+          <p className="text-xl text-white/90 mb-10 max-w-2xl mx-auto">
+            Your brand's AI reputation is being written every day.<br/>
+            Start measuring it now.
           </p>
-        </footer>
-      </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <a
+              href="#try-it"
+              className="px-10 py-5 bg-white text-blue-600 font-bold text-xl rounded-xl hover:bg-gray-100 transition-all shadow-2xl inline-flex items-center gap-2"
+            >
+              <span>🚀</span>
+              Run My Test Report
+            </a>
+            <button className="px-10 py-5 bg-transparent border-2 border-white text-white font-bold text-xl rounded-xl hover:bg-white/10 transition-all">
+              Book an Executive Demo
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-8 bg-gray-900 dark:bg-black text-center">
+        <p className="text-sm text-gray-400">
+          BrandLens {getVersionString()} | AI-Powered Brand Analysis
+        </p>
+      </footer>
     </div>
   );
 }
