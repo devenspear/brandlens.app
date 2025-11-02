@@ -7,12 +7,14 @@ interface ReportDashboardProps {
 
 const ReportDashboard: FC<ReportDashboardProps> = ({ report }) => {
   // Calculate key metrics
-  const modelCount = Object.keys(report.modelPerspectives).length;
-  const totalFindings = report.consensus?.themes?.length || 0;
-  const consensusScore = report.consensus?.confidence || 0;
+  const modelCount = Array.isArray(report.modelPerspectives)
+    ? report.modelPerspectives.length
+    : Object.keys(report.modelPerspectives).length;
+  const totalFindings = report.consensus?.commonThemes?.length || 0;
+  const consensusScore = report.consensus?.agreementIndex || 0;
 
   // Get top theme if available
-  const topTheme = report.consensus?.themes?.[0]?.theme || 'N/A';
+  const topTheme = report.consensus?.commonThemes?.[0] || 'N/A';
 
   return (
     <div className="border-2 border-gray-300 rounded-lg p-8 bg-gradient-to-br from-gray-50 to-white print:border-gray-400 print:bg-white">

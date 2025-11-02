@@ -4,6 +4,21 @@ import * as cheerio from 'cheerio';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
+// Vercel-compatible Chromium (dynamically imported in production)
+async function getChromium() {
+  if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    try {
+      // Dynamic import for Vercel/Lambda environments only
+      const chromiumModule = await import('@sparticuz/chromium');
+      return chromiumModule.default;
+    } catch (error) {
+      console.warn('⚠️  @sparticuz/chromium not available, using local Puppeteer');
+      return null;
+    }
+  }
+  return null;
+}
+
 const MAX_PAGES = parseInt(process.env.MAX_PAGES_PER_SITE || '4');
 const PAGE_TIMEOUT = 15000; // 15 seconds per page
 const MIN_CONTENT_LENGTH = 500; // Minimum characters for valid content
@@ -22,22 +37,36 @@ export class PuppeteerScraper {
   private browser: Browser | null = null;
 
   /**
-   * Initialize browser
+   * Initialize browser (works on both local and Vercel)
    */
   private async getBrowser(): Promise<Browser> {
     if (!this.browser) {
-      this.browser = await puppeteer.launch({
-        headless: true,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-accelerated-2d-canvas',
-          '--no-first-run',
-          '--no-zygote',
-          '--disable-gpu',
-        ],
-      });
+      // Try to get Vercel-compatible Chromium
+      const chromium = await getChromium();
+
+      if (chromium) {
+        console.log('🚀 Launching Puppeteer with Vercel-compatible Chromium');
+        this.browser = await puppeteer.launch({
+          args: chromium.args,
+          defaultViewport: { width: 1920, height: 1080 },
+          executablePath: await chromium.executablePath(),
+          headless: true,
+        });
+      } else {
+        console.log('🖥️  Launching Puppeteer with local Chrome');
+        this.browser = await puppeteer.launch({
+          headless: true,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-gpu',
+          ],
+        });
+      }
     }
     return this.browser;
   }
@@ -98,7 +127,7 @@ export class PuppeteerScraper {
             title: 'Error',
             content: '',
             excerpt: '',
-            metadata: { error: errorMsg },
+            metadata: {} as any,
           },
           subPages: [],
           error: `Main page inaccessible: ${errorMsg}`,
@@ -168,21 +197,34 @@ export class PuppeteerScraper {
       });
 
       // Wait a bit more for any lazy-loaded content
-      await page.waitForTimeout(2000);
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Take screenshot
-      const screenshotDir = path.join(process.cwd(), 'public', 'screenshots');
-      await fs.mkdir(screenshotDir, { recursive: true });
+      // Take screenshot (skip on Vercel due to read-only filesystem)
+      let screenshotFilename: string | undefined;
+      const isProduction = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
 
-      const screenshotFilename = `${Date.now()}-${this.sanitizeFilename(url)}.jpg`;
-      const screenshotPath = path.join(screenshotDir, screenshotFilename);
+      if (!isProduction) {
+        try {
+          const screenshotDir = path.join(process.cwd(), 'public', 'screenshots');
+          await fs.mkdir(screenshotDir, { recursive: true });
 
-      await page.screenshot({
-        path: screenshotPath,
-        type: 'jpeg',
-        quality: 80,
-        fullPage: false, // Just viewport for preview
-      });
+          screenshotFilename = `${Date.now()}-${this.sanitizeFilename(url)}.jpeg`;
+          const screenshotPath = path.join(screenshotDir, screenshotFilename) as `${string}.jpeg`;
+
+          await page.screenshot({
+            path: screenshotPath,
+            type: 'jpeg',
+            quality: 80,
+            fullPage: false, // Just viewport for preview
+          });
+          console.log(`📸 Screenshot saved: ${screenshotFilename}`);
+        } catch (screenshotError) {
+          console.warn('⚠️  Screenshot failed (continuing without screenshot):', screenshotError);
+          screenshotFilename = undefined;
+        }
+      } else {
+        console.log('⚠️  Skipping screenshot on Vercel (filesystem read-only)');
+      }
 
       // Get page content (after JavaScript execution)
       const html = await page.content();
@@ -198,9 +240,13 @@ export class PuppeteerScraper {
           ogTitle: getMeta('meta[property="og:title"]'),
           ogDescription: getMeta('meta[property="og:description"]'),
           ogImage: getMeta('meta[property="og:image"]'),
-          screenshot: `/screenshots/${screenshotFilename}`,
         };
       });
+
+      // Add screenshot path if available
+      if (screenshotFilename) {
+        (metadata as any).screenshot = `/screenshots/${screenshotFilename}`;
+      }
 
       // Get title
       const title = await page.title();
@@ -215,7 +261,11 @@ export class PuppeteerScraper {
       const excerpt = mainContent.slice(0, 300).trim() + (mainContent.length > 300 ? '...' : '');
 
       // Perform quality check
-      const quality = this.checkContentQuality(mainContent, html, `/screenshots/${screenshotFilename}`);
+      const quality = this.checkContentQuality(
+        mainContent,
+        html,
+        screenshotFilename ? `/screenshots/${screenshotFilename}` : undefined
+      );
 
       const scrapedPage: ScrapedPage = {
         url,
@@ -261,7 +311,9 @@ export class PuppeteerScraper {
       warnings.push('No images detected');
     }
 
-    if (!screenshotPath) {
+    // Only warn about screenshot if not on Vercel (where screenshots are disabled)
+    const isProduction = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+    if (!screenshotPath && !isProduction) {
       warnings.push('Screenshot not captured');
     }
 

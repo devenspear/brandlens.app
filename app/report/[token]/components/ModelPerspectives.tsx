@@ -24,8 +24,10 @@ const ModelPerspectives: FC<ModelPerspectivesProps> = ({ perspectives }) => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {allProviders.map((providerInfo) => {
-          const perspective = perspectives[providerInfo.key as keyof typeof perspectives];
-          const isAvailable = !!perspective;
+          const perspective = Array.isArray(perspectives)
+            ? perspectives.find((p) => p?.provider === providerInfo.key)
+            : perspectives?.[providerInfo.key as keyof typeof perspectives];
+          const isAvailable = !!perspective && typeof perspective === 'object' && 'model' in perspective;
 
           return (
             <div
@@ -44,7 +46,7 @@ const ModelPerspectives: FC<ModelPerspectivesProps> = ({ perspectives }) => {
                     <h3 className="text-lg font-bold text-gray-900 uppercase tracking-wide">
                       {providerInfo.name}
                     </h3>
-                    {isAvailable && perspective.model && (
+                    {isAvailable && perspective && 'model' in perspective && perspective.model && (
                       <p className="text-xs font-mono text-gray-500 mt-0.5">{perspective.model}</p>
                     )}
                   </div>
@@ -57,7 +59,7 @@ const ModelPerspectives: FC<ModelPerspectivesProps> = ({ perspectives }) => {
               </div>
 
               {/* Content */}
-              {isAvailable ? (
+              {isAvailable && perspective && 'synopsis' in perspective ? (
                 <>
                   {/* Synopsis */}
                   {perspective.synopsis?.summary && (
