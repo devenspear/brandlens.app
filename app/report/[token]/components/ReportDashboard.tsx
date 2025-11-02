@@ -33,7 +33,9 @@ const ReportDashboard: FC<ReportDashboardProps> = ({ report }) => {
 
         {/* Metric 2: Consensus Score */}
         <div className="text-center p-4 border-2 border-gray-200 rounded-lg bg-white print:border-gray-300">
-          <div className="text-4xl font-bold text-green-600">{Math.round(consensusScore * 100)}%</div>
+          <div className="text-4xl font-bold text-green-600">
+            {consensusScore >= 1 ? Math.round(consensusScore) : Math.round(consensusScore * 100)}%
+          </div>
           <div className="text-sm font-medium text-gray-600 mt-2">Consensus</div>
           <div className="text-xs text-gray-500 mt-1">Agreement Score</div>
         </div>
@@ -71,7 +73,8 @@ const ReportDashboard: FC<ReportDashboardProps> = ({ report }) => {
       {/* Model Coverage Indicator */}
       <div className="mt-6 grid grid-cols-3 gap-3">
         {['ANTHROPIC', 'OPENAI', 'GOOGLE'].map((model) => {
-          const hasData = report.modelPerspectives[model as keyof typeof report.modelPerspectives];
+          const perspective = report.modelPerspectives[model as keyof typeof report.modelPerspectives];
+          const hasData = !!perspective && typeof perspective === 'object' && 'model' in perspective;
           return (
             <div
               key={model}
