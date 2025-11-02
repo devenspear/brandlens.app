@@ -6,6 +6,7 @@ import { getVersionString } from '@/lib/utils/version';
 
 // Import child components
 import ReportHeader from './components/ReportHeader';
+import ReportActions from './components/ReportActions';
 import ExecutiveSummary from './components/ExecutiveSummary';
 import ModelPerspectives from './components/ModelPerspectives';
 import ConsensusAnalysis from './components/ConsensusAnalysis';
@@ -30,6 +31,9 @@ const ReportPage: FC<ReportPageProps> = async ({ params }) => {
   return (
     <PrintStyles>
       <div className="min-h-screen bg-white print:bg-white">
+        {/* Report Actions - Download/Email (hidden when printing) */}
+        <ReportActions reportToken={params.token} url={report.url} />
+
         <main className="max-w-7xl mx-auto px-6 py-10 print:px-0 print:py-0">
         {/* Report Header */}
         <div className="avoid-break">

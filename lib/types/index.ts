@@ -110,6 +110,22 @@ export interface Recommendation {
   evidence?: string;
 }
 
+// AI Recommendation Analysis
+export interface AIRecommendationAnalysis {
+  wouldRecommend: boolean;
+  confidence: 'high' | 'medium' | 'low';
+  whenToRecommend: string[];
+  howYouWouldDescribe: string;
+  aiDiscoverabilityScore: number;
+  strengths: string[];
+  weaknesses: string[];
+  improvementSuggestions: {
+    suggestion: string;
+    reasoning: string;
+    impact: 'high' | 'medium' | 'low';
+  }[];
+}
+
 // Human vs LLM
 export interface HumanVsLlmComparison {
   humanStatement: string;
@@ -142,12 +158,17 @@ export interface BrandAuditReport {
     provider: LlmProvider;
     model: string;
     synopsis: BrandSynopsis;
+    aiRecommendation?: AIRecommendationAnalysis;
   }[];
 
   consensus: ConsensusAnalysis;
   positioning: PositioningGrid;
   messaging: MessagingScores;
   recommendations: Recommendation[];
+  aiRecommendations?: {
+    provider: LlmProvider;
+    analysis: AIRecommendationAnalysis;
+  }[];
 
   humanVsLlm?: HumanVsLlmComparison;
   humanVLLM?: HumanVsLlmComparison; // Alias for compatibility with report-generator

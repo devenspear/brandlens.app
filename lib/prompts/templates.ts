@@ -284,6 +284,56 @@ Return your analysis as a JSON object:
 }`;
 };
 
+export const createAIRecommendationPrompt = (context: PromptContext): string => {
+  const { domain, mainPage, subPages } = context;
+
+  const pageContents = [mainPage, ...subPages]
+    .map(page => `
+=== ${page.url} ===
+${page.content}
+`)
+    .join('\n');
+
+  return `As an AI assistant, analyze when and how you would recommend ${domain} to your users.
+
+Consider these scenarios:
+1. When a user asks for recommendations in this category, would you mention this site?
+2. What specific user queries would trigger you to recommend this site?
+3. What makes this site AI-discoverable vs invisible to AI assistants?
+4. How would you describe this site to a user who asks about it?
+
+Web pages:
+${pageContents}
+
+Provide your analysis as a JSON object:
+{
+  "wouldRecommend": true/false,
+  "confidence": "high|medium|low",
+  "whenToRecommend": [
+    "User query scenario 1",
+    "User query scenario 2",
+    "User query scenario 3"
+  ],
+  "howYouWouldDescribe": "How you would describe this site to a user in 2-3 sentences",
+  "aiDiscoverabilityScore": 0-100,
+  "strengths": [
+    "What makes this site easy for AI to understand and recommend",
+    "Another strength"
+  ],
+  "weaknesses": [
+    "What makes this site hard for AI to understand or recommend",
+    "Another weakness"
+  ],
+  "improvementSuggestions": [
+    {
+      "suggestion": "Specific recommendation",
+      "reasoning": "Why this would improve AI discoverability",
+      "impact": "high|medium|low"
+    }
+  ]
+}`;
+};
+
 export const createCompetitorAnalysisPrompt = (
   domain: string,
   competitorPages: { name: string; url: string; content: string }[]
