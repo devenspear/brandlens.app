@@ -102,6 +102,9 @@ export interface HeuristicScore {
 export interface Recommendation {
   title: string;
   description: string;
+  justification?: string;
+  industryExamples?: string[];
+  bestPractices?: string[];
   impact: 'high' | 'medium' | 'low';
   effort: 'S' | 'M' | 'L';
   category: 'copy' | 'content' | 'proof' | 'structure' | 'faq';

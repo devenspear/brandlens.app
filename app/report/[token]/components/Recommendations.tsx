@@ -55,6 +55,52 @@ const Recommendations: FC<RecommendationsProps> = ({ recommendations }) => {
                 {rec.description}
               </p>
 
+              {/* Justification */}
+              {rec.justification && (
+                <div className="mb-4 p-3 bg-blue-50 border-l-2 border-blue-400 rounded print:bg-gray-50">
+                  <h5 className="text-xs font-bold text-blue-900 uppercase tracking-wide mb-1">
+                    Why This Works
+                  </h5>
+                  <p className="text-sm text-blue-800 leading-relaxed print:text-gray-800">
+                    {rec.justification}
+                  </p>
+                </div>
+              )}
+
+              {/* Industry Examples */}
+              {rec.industryExamples && rec.industryExamples.length > 0 && (
+                <div className="mb-4">
+                  <h5 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
+                    📊 Industry Examples
+                  </h5>
+                  <ul className="space-y-1.5">
+                    {rec.industryExamples.map((example, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                        <span className="text-gray-400 mt-0.5">▸</span>
+                        <span>{example}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Best Practices */}
+              {rec.bestPractices && rec.bestPractices.length > 0 && (
+                <div className="mb-4">
+                  <h5 className="text-xs font-bold text-gray-700 uppercase tracking-wide mb-2">
+                    ✓ Best Practices
+                  </h5>
+                  <ul className="space-y-1.5">
+                    {rec.bestPractices.map((practice, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                        <span className="text-green-500 mt-0.5">✓</span>
+                        <span>{practice}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {/* Metrics */}
               <div className="flex items-center gap-3 flex-wrap">
                 <div className="flex items-center gap-2">

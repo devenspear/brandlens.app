@@ -215,7 +215,9 @@ ${JSON.stringify(existingAnalysis, null, 2)}
 
 For each recommendation:
 - Provide a clear, actionable title
-- Explain what to do and why
+- Explain what to do and why (with detailed justification)
+- Include industry examples and best practices from similar brands
+- Explain the psychological/marketing principles behind the recommendation
 - Categorize as: copy, content, proof, structure, or faq
 - Estimate impact (high/medium/low) and effort (S/M/L)
 - Include before/after examples where applicable
@@ -231,6 +233,15 @@ Return your recommendations as a JSON array:
   {
     "title": "Clear, actionable recommendation title",
     "description": "Detailed explanation of what to do and why",
+    "justification": "Deep reasoning about why this works, backed by marketing principles",
+    "industryExamples": [
+      "Example 1: Company X does this by...",
+      "Example 2: Company Y improved metrics by..."
+    ],
+    "bestPractices": [
+      "Best practice 1",
+      "Best practice 2"
+    ],
     "impact": "high|medium|low",
     "effort": "S|M|L",
     "category": "copy|content|proof|structure|faq",
