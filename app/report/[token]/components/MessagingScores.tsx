@@ -80,7 +80,7 @@ const MessagingScores: FC<MessagingScoresProps> = ({ scores }) => {
           <div>
             <h2 className="text-3xl font-bold text-gray-900">Messaging Effectiveness</h2>
             <p className="text-sm text-gray-600 mt-2">
-              Quantitative analysis of brand messaging quality
+              AI-assessed analysis of brand messaging quality
             </p>
           </div>
           {/* Overall Score Badge */}

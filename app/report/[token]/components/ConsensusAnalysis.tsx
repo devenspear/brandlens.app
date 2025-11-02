@@ -27,7 +27,7 @@ const ConsensusAnalysis: FC<ConsensusAnalysisProps> = ({ consensus }) => {
       <div className="border-b-2 border-gray-900 pb-4 mb-6">
         <h2 className="text-3xl font-bold text-gray-900">Cross-Model Consensus</h2>
         <p className="text-sm text-gray-600 mt-2">
-          Agreement analysis across all AI providers
+          AI consensus analysis across all AI providers
         </p>
       </div>
 

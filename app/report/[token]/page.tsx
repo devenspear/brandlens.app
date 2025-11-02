@@ -76,6 +76,22 @@ const ReportPage: FC<ReportPageProps> = async ({ params }) => {
           </div>
         </div>
 
+        {/* Disclaimer */}
+        <div className="mt-12 bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 print:bg-white print:border-gray-400">
+          <h3 className="text-sm font-bold text-yellow-900 mb-2 uppercase tracking-wide print:text-gray-900">
+            ⚠️ Important Disclaimer
+          </h3>
+          <div className="text-xs text-yellow-800 space-y-1 print:text-gray-700">
+            <p>
+              This report reflects AI interpretation of public website content only. Analysis is limited by LLM capabilities and is not based on traffic data, performance metrics, or proprietary information.
+              Reports assess brand messaging perception and AI consensus, not business performance. Recommendations are AI-generated suggestions for informational purposes only, not professional marketing advice.
+            </p>
+            <p className="pt-1">
+              <strong>Legal Notice:</strong> BrandLens complies with Fair Housing laws. All analysis is based solely on publicly available content. Use results as one input among many in marketing decisions.
+            </p>
+          </div>
+        </div>
+
         {/* Report Footer */}
         <footer className="mt-16 pt-8 border-t border-gray-200 print:border-gray-400 text-center print:mt-12">
           <p className="text-sm text-gray-500 print:text-gray-600">

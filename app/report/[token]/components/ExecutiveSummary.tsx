@@ -12,7 +12,7 @@ const ExecutiveSummary: FC<ExecutiveSummaryProps> = ({ summary }) => {
       <div className="border-b-2 border-gray-900 pb-4 mb-6">
         <h2 className="text-3xl font-bold text-gray-900">Executive Summary</h2>
         <p className="text-sm text-gray-600 mt-2">
-          Strategic overview and key findings
+          AI-generated strategic overview and key findings
         </p>
       </div>
 

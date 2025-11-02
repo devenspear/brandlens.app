@@ -114,7 +114,7 @@ const ReportDashboard: FC<ReportDashboardProps> = ({ report }) => {
                 <span className="text-xs font-mono font-bold text-gray-700">{model.name}</span>
               </div>
               <div className={`text-sm font-bold ${textColorClasses[model.color as keyof typeof textColorClasses]}`}>
-                {hasData ? '✓ Available' : 'No Data'}
+                {hasData ? '✓ Included' : 'Pending'}
               </div>
             </div>
           );

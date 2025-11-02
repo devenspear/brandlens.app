@@ -266,6 +266,28 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Disclaimer */}
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-200 dark:border-yellow-800 rounded-xl p-6 mt-12">
+          <h3 className="text-lg font-bold text-yellow-900 dark:text-yellow-200 mb-3 flex items-center gap-2">
+            <span>⚠️</span>
+            Important Disclaimer
+          </h3>
+          <div className="text-sm text-yellow-800 dark:text-yellow-300 space-y-2">
+            <p>
+              <strong>BrandLens is a perception analysis tool</strong> that shows how AI models interpret your public website content. This analysis:
+            </p>
+            <ul className="list-disc list-inside space-y-1 ml-4">
+              <li><strong>Is limited by LLM capabilities:</strong> Results reflect AI interpretation, not human expertise or market research</li>
+              <li><strong>Is not data-driven:</strong> Analysis is qualitative and based on public website content only, not traffic, performance metrics, or proprietary data</li>
+              <li><strong>Focuses on perception:</strong> Reports assess brand messaging clarity and AI consensus, not business performance or ROI</li>
+              <li><strong>Is for informational purposes:</strong> Recommendations are AI-generated suggestions, not professional marketing advice</li>
+            </ul>
+            <p className="pt-2">
+              <strong>Legal Notice:</strong> BrandLens complies with Fair Housing laws and does not make discriminatory assessments. All analysis is based solely on publicly available website content. Results should be used as one input among many in your marketing strategy decisions.
+            </p>
+          </div>
+        </div>
+
         {/* Version Footer */}
         <footer className="mt-16 pb-8 text-center">
           <p className="text-sm text-gray-400 dark:text-gray-500">

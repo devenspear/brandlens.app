@@ -54,7 +54,7 @@ const ModelPerspectives: FC<ModelPerspectivesProps> = ({ perspectives }) => {
                 <div className={`px-2 py-1 rounded-lg text-xs font-bold shadow-sm ${
                   isAvailable ? `${providerInfo.badgeBg} ${providerInfo.badgeText}` : 'bg-gray-200 text-gray-500'
                 }`}>
-                  {isAvailable ? '✓ AVAILABLE' : '✗ N/A'}
+                  {isAvailable ? '✓ INCLUDED' : '— PENDING'}
                 </div>
               </div>
 
@@ -74,27 +74,53 @@ const ModelPerspectives: FC<ModelPerspectivesProps> = ({ perspectives }) => {
                   )}
 
                   {/* Brand Pillars */}
-                  {perspective.synopsis?.pillars && Array.isArray(perspective.synopsis.pillars) && perspective.synopsis.pillars.length > 0 ? (
-                    <div>
-                      <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">
-                        Brand Pillars
-                      </h4>
-                      <ul className="space-y-1.5">
-                        {perspective.synopsis.pillars.slice(0, 3).map((pillar: any, i: number) => (
-                          <li key={i} className="flex items-start gap-2 text-sm">
-                            <span className="text-gray-400 mt-0.5">▪</span>
-                            <span className="text-gray-800 font-medium">
-                              {typeof pillar === 'string' ? pillar : (pillar.name || pillar.description || JSON.stringify(pillar))}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ) : (
-                    <div className="text-xs text-gray-400 italic">
-                      No brand pillars identified for this provider
-                    </div>
-                  )}
+                  {(() => {
+                    // Try to extract pillars from various possible formats
+                    let pillars: any[] = [];
+
+                    if (perspective.synopsis?.pillars && Array.isArray(perspective.synopsis.pillars)) {
+                      pillars = perspective.synopsis.pillars;
+                    } else if (perspective.synopsis?.keyQuotes && Array.isArray(perspective.synopsis.keyQuotes)) {
+                      // Fallback to keyQuotes if pillars aren't available
+                      pillars = perspective.synopsis.keyQuotes.slice(0, 3);
+                    }
+
+                    return pillars.length > 0 ? (
+                      <div>
+                        <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-2">
+                          Brand Pillars
+                        </h4>
+                        <ul className="space-y-1.5">
+                          {pillars.slice(0, 3).map((pillar: any, i: number) => {
+                            // Handle different pillar formats
+                            let displayText = '';
+                            if (typeof pillar === 'string') {
+                              displayText = pillar;
+                            } else if (pillar.name) {
+                              displayText = pillar.description ? `${pillar.name}: ${pillar.description}` : pillar.name;
+                            } else if (pillar.description) {
+                              displayText = pillar.description;
+                            } else {
+                              displayText = JSON.stringify(pillar);
+                            }
+
+                            return (
+                              <li key={i} className="flex items-start gap-2 text-sm">
+                                <span className="text-gray-400 mt-0.5">▪</span>
+                                <span className="text-gray-800 font-medium">
+                                  {displayText}
+                                </span>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400 italic">
+                        No brand pillars identified for this provider
+                      </div>
+                    );
+                  })()}
                 </>
               ) : (
                 <div className="text-center py-8">

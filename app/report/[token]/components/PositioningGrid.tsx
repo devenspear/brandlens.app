@@ -12,7 +12,7 @@ const PositioningGrid: FC<PositioningGridProps> = ({ positioning }) => {
       <div className="border-b-2 border-gray-900 pb-4 mb-6">
         <h2 className="text-3xl font-bold text-gray-900">Competitive Positioning Map</h2>
         <p className="text-sm text-gray-600 mt-2">
-          Visual representation of market positioning vs. competitors
+          AI-interpreted visual representation of market positioning vs. competitors
         </p>
       </div>
 
