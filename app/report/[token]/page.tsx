@@ -10,7 +10,7 @@ import ReportActions from './components/ReportActions';
 import ExecutiveSummary from './components/ExecutiveSummary';
 import ModelPerspectives from './components/ModelPerspectives';
 import ConsensusAnalysis from './components/ConsensusAnalysis';
-import PositioningGrid from './components/PositioningGrid';
+import BrandProfile from './components/BrandProfile';
 import MessagingScores from './components/MessagingScores';
 import HumanVLLMComparison from './components/HumanVLLMComparison';
 import Recommendations from './components/Recommendations';
@@ -62,7 +62,7 @@ const ReportPage: FC<ReportPageProps> = async ({ params }) => {
           </div>
 
           <div className="avoid-break">
-            <PositioningGrid positioning={report.positioning} />
+            <BrandProfile report={report} />
           </div>
 
           <div className="avoid-break">
