@@ -77,12 +77,13 @@ const ModelPerspectives: FC<ModelPerspectivesProps> = ({ perspectives }) => {
                   {(() => {
                     // Try to extract pillars from various possible formats
                     let pillars: any[] = [];
+                    const synopsisData = perspective.synopsis as any; // Type assertion for flexible data access
 
-                    if (perspective.synopsis?.pillars && Array.isArray(perspective.synopsis.pillars)) {
-                      pillars = perspective.synopsis.pillars;
-                    } else if (perspective.synopsis?.keyQuotes && Array.isArray(perspective.synopsis.keyQuotes)) {
+                    if (synopsisData?.pillars && Array.isArray(synopsisData.pillars)) {
+                      pillars = synopsisData.pillars;
+                    } else if (synopsisData?.keyQuotes && Array.isArray(synopsisData.keyQuotes)) {
                       // Fallback to keyQuotes if pillars aren't available
-                      pillars = perspective.synopsis.keyQuotes.slice(0, 3);
+                      pillars = synopsisData.keyQuotes.slice(0, 3);
                     }
 
                     return pillars.length > 0 ? (
