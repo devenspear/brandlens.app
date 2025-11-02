@@ -190,6 +190,7 @@ enum Industry {
   HOSPITALITY
   HEALTHCARE
   FINANCIAL_SERVICES
+  TECHNOLOGY                 // Legacy - kept for backward compatibility
   TECHNOLOGY_SAAS
   PROFESSIONAL_SERVICES
   RETAIL
@@ -197,4 +198,5 @@ enum Industry {
   MANUFACTURING
   SENIOR_LIVING
   MULTIFAMILY
+  OTHER                      // Legacy - kept for backward compatibility
 }

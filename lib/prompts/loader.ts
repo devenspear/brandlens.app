@@ -87,6 +87,16 @@ export const INDUSTRY_CONFIG: Record<Industry, {
     label: 'Multifamily',
     description: 'Apartment communities, rental properties',
   },
+  TECHNOLOGY: {
+    enabled: false,
+    label: 'Technology (Legacy)',
+    description: 'Legacy - use TECHNOLOGY_SAAS instead',
+  },
+  OTHER: {
+    enabled: false,
+    label: 'Other (Legacy)',
+    description: 'Legacy - use specific industry type instead',
+  },
 };
 
 /**
