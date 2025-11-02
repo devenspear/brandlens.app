@@ -15,6 +15,7 @@ model Project {
   url                  String
   email                String
   region               String?
+  industry             Industry @default(RESIDENTIAL_REAL_ESTATE)
   humanBrandStatement  String?  @db.Text
   createdBy            String?
   status               ProjectStatus @default(PENDING)
@@ -33,6 +34,7 @@ model Project {
   @@index([status])
   @@index([createdAt])
   @@index([email])
+  @@index([industry])
 
 }
 
@@ -183,15 +185,16 @@ enum FindingKind {
 }
 
 enum Industry {
-  RESIDENTIAL_REAL_ESTATE
+  RESIDENTIAL_REAL_ESTATE    // Active for production
   COMMERCIAL_REAL_ESTATE
-  HEALTHCARE
-  TECHNOLOGY
-  FINANCIAL_SERVICES
-  RETAIL
   HOSPITALITY
-  MANUFACTURING
-  EDUCATION
+  HEALTHCARE
+  FINANCIAL_SERVICES
+  TECHNOLOGY_SAAS
   PROFESSIONAL_SERVICES
-  OTHER
+  RETAIL
+  EDUCATION
+  MANUFACTURING
+  SENIOR_LIVING
+  MULTIFAMILY
 }

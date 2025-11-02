@@ -3,10 +3,12 @@ import { prisma } from '@/lib/prisma/client';
 import { brandAnalyzer } from '@/lib/services/brand-analyzer';
 import { apiLogger } from '@/lib/debug/api-logger';
 import { z } from 'zod';
+import { Industry } from '@prisma/client';
 
 const createProjectSchema = z.object({
   url: z.string().url('Invalid URL'),
   email: z.string().email('Invalid email address'),
+  industry: z.nativeEnum(Industry).default(Industry.RESIDENTIAL_REAL_ESTATE),
   region: z.string().optional(),
   humanBrandStatement: z.string().optional(),
 });
@@ -40,12 +42,13 @@ export async function POST(request: NextRequest) {
       data: {
         url: validated.url,
         email: validated.email,
+        industry: validated.industry,
         region: validated.region,
         humanBrandStatement: validated.humanBrandStatement,
         status: 'PENDING',
       },
     });
-    console.log('[API] Project created:', project.id);
+    console.log('[API] Project created:', project.id, 'Industry:', validated.industry);
 
     const duration = Date.now() - startTime;
     apiLogger.logResponse(logId, 200, duration, { id: project.id });

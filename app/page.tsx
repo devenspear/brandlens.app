@@ -5,17 +5,23 @@ import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
 import { ProgressTracker } from '@/components/analysis/ProgressTracker';
 import { getVersionString } from '@/lib/utils/version';
+import { Industry } from '@prisma/client';
+import { getAllIndustries } from '@/lib/prompts/loader';
 
 export default function Home() {
   const router = useRouter();
   const [url, setUrl] = useState('');
   const [email, setEmail] = useState('');
+  const [industry, setIndustry] = useState<Industry>(Industry.RESIDENTIAL_REAL_ESTATE);
   const [region, setRegion] = useState('');
   const [humanBrandStatement, setHumanBrandStatement] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [projectId, setProjectId] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+
+  // Get all industries for the dropdown
+  const industries = getAllIndustries();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,11 +38,12 @@ export default function Home() {
       const response = await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          url: normalizedUrl, 
-          email, 
-          region: region || undefined, 
-          humanBrandStatement: humanBrandStatement || undefined 
+        body: JSON.stringify({
+          url: normalizedUrl,
+          email,
+          industry,
+          region: region || undefined,
+          humanBrandStatement: humanBrandStatement || undefined
         }),
       });
 
@@ -126,6 +133,35 @@ export default function Home() {
               />
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 We'll email you the completed Brand Read report
+              </p>
+            </div>
+
+            <div>
+              <label
+                htmlFor="industry"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
+              >
+                Industry Vertical *
+              </label>
+              <select
+                id="industry"
+                value={industry}
+                onChange={(e) => setIndustry(e.target.value as Industry)}
+                required
+                className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                {industries.map((ind) => (
+                  <option
+                    key={ind.value}
+                    value={ind.value}
+                    disabled={!ind.enabled}
+                  >
+                    {ind.label} {!ind.enabled && '(Coming Soon)'}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Analysis prompts are tailored to your industry. Currently only Residential Real Estate is available.
               </p>
             </div>
 

@@ -1,4 +1,4 @@
-import { LlmProvider, ProjectStatus } from '@prisma/client';
+import { LlmProvider, ProjectStatus, Industry } from '@prisma/client';
 import { prisma } from '../prisma/client';
 import { LLMProviderFactory } from './llm-providers';
 import { webScraper } from './scraper';
@@ -15,6 +15,7 @@ import {
   createRecommendationsPrompt,
   PromptContext,
 } from '../prompts/templates';
+import { loadIndustryPrompts } from '../prompts/loader';
 import { BrandSynopsis, LLMConfig } from '../types';
 
 export class BrandAnalyzer {
@@ -142,9 +143,10 @@ export class BrandAnalyzer {
       // Run analysis with all providers in parallel (with graceful degradation)
       const providers = LLMProviderFactory.getAllProviders();
       console.log(`📊 Starting ${providers.length} LLM providers: ${providers.join(', ')}`);
+      console.log(`🏢 Project Industry: ${project.industry}`);
 
       const results = await Promise.allSettled(
-        providers.map(provider => this.analyzeWithProvider(projectId, provider, promptContext))
+        providers.map(provider => this.analyzeWithProvider(projectId, provider, promptContext, project.industry))
       );
 
       // Check results
@@ -209,7 +211,8 @@ export class BrandAnalyzer {
   private async analyzeWithProvider(
     projectId: string,
     provider: LlmProvider,
-    context: PromptContext
+    context: PromptContext,
+    industry: Industry
   ): Promise<void> {
     const llmProvider = LLMProviderFactory.getProvider(provider);
 
@@ -219,6 +222,10 @@ export class BrandAnalyzer {
       temperature: 0.3,
       maxTokens: 8000, // Increased for all providers to prevent truncation
     };
+
+    // Load industry-specific prompts if available
+    const industryPrompts = await loadIndustryPrompts(industry);
+    console.log(`[${provider}] 🏢 Industry prompts loaded for ${industry}:`, industryPrompts ? 'Yes' : 'No (using generic)');
 
     let llmRun: any;
 
@@ -242,7 +249,9 @@ export class BrandAnalyzer {
       // 1. Brand Synopsis
       console.log(`[${provider}] ⏱️  Step 1/8: Starting brand synopsis analysis...`);
       await this.updateProgress(projectId, `${provider}: Analyzing Brand Synopsis (1/8)`, 20);
-      const synopsisPrompt = createBrandSynopsisPrompt(context);
+      const synopsisPrompt = industryPrompts?.brandSynopsis
+        ? industryPrompts.brandSynopsis(context)
+        : createBrandSynopsisPrompt(context);
       const synopsisStart = Date.now();
       const synopsisResult = await llmProvider.analyze(synopsisPrompt, config);
       console.log(`[${provider}] ✅ Step 1/8: Brand synopsis complete (${Date.now() - synopsisStart}ms, ${synopsisResult.tokensUsed} tokens, $${(synopsisResult.cost || 0).toFixed(4)})`);
@@ -260,7 +269,9 @@ export class BrandAnalyzer {
       // 2. Positioning Pillars
       console.log(`[${provider}] ⏱️  Step 2/8: Starting positioning pillars analysis...`);
       await this.updateProgress(projectId, `${provider}: Analyzing Positioning Pillars (2/8)`, 30);
-      const pillarsPrompt = createPositioningPillarsPrompt(context);
+      const pillarsPrompt = industryPrompts?.positioningPillars
+        ? industryPrompts.positioningPillars(context)
+        : createPositioningPillarsPrompt(context);
       const pillarsStart = Date.now();
       const pillarsResult = await llmProvider.analyze(pillarsPrompt, config);
       console.log(`[${provider}] ✅ Step 2/8: Positioning pillars complete (${Date.now() - pillarsStart}ms, ${pillarsResult.tokensUsed} tokens, $${(pillarsResult.cost || 0).toFixed(4)})`);
@@ -277,7 +288,9 @@ export class BrandAnalyzer {
       // 3. Tone of Voice
       console.log(`[${provider}] ⏱️  Step 3/8: Starting tone of voice analysis...`);
       await this.updateProgress(projectId, `${provider}: Analyzing Tone of Voice (3/8)`, 40);
-      const tonePrompt = createToneOfVoicePrompt(context);
+      const tonePrompt = industryPrompts?.toneOfVoice
+        ? industryPrompts.toneOfVoice(context)
+        : createToneOfVoicePrompt(context);
       const toneStart = Date.now();
       const toneResult = await llmProvider.analyze(tonePrompt, config);
       console.log(`[${provider}] ✅ Step 3/8: Tone of voice complete (${Date.now() - toneStart}ms, ${toneResult.tokensUsed} tokens, $${(toneResult.cost || 0).toFixed(4)})`);
@@ -288,7 +301,9 @@ export class BrandAnalyzer {
       // 4. Buyer Segments
       console.log(`[${provider}] ⏱️  Step 4/8: Starting buyer segments analysis...`);
       await this.updateProgress(projectId, `${provider}: Analyzing Buyer Segments (4/8)`, 50);
-      const segmentsPrompt = createBuyerSegmentsPrompt(context);
+      const segmentsPrompt = industryPrompts?.buyerSegments
+        ? industryPrompts.buyerSegments(context)
+        : createBuyerSegmentsPrompt(context);
       const segmentsStart = Date.now();
       const segmentsResult = await llmProvider.analyze(segmentsPrompt, config);
       console.log(`[${provider}] ✅ Step 4/8: Buyer segments complete (${Date.now() - segmentsStart}ms, ${segmentsResult.tokensUsed} tokens, $${(segmentsResult.cost || 0).toFixed(4)})`);
@@ -305,7 +320,9 @@ export class BrandAnalyzer {
       // 5. Amenities
       console.log(`[${provider}] ⏱️  Step 5/8: Starting amenity claims extraction...`);
       await this.updateProgress(projectId, `${provider}: Extracting Amenity Claims (5/8)`, 60);
-      const amenitiesPrompt = createAmenitiesPrompt(context);
+      const amenitiesPrompt = industryPrompts?.amenities
+        ? industryPrompts.amenities(context)
+        : createAmenitiesPrompt(context);
       const amenitiesStart = Date.now();
       const amenitiesResult = await llmProvider.analyze(amenitiesPrompt, config);
       console.log(`[${provider}] ✅ Step 5/8: Amenity claims complete (${Date.now() - amenitiesStart}ms, ${amenitiesResult.tokensUsed} tokens, $${(amenitiesResult.cost || 0).toFixed(4)})`);
@@ -322,7 +339,9 @@ export class BrandAnalyzer {
       // 6. Trust Signals
       console.log(`[${provider}] ⏱️  Step 6/8: Starting trust signals analysis...`);
       await this.updateProgress(projectId, `${provider}: Analyzing Trust Signals (6/8)`, 70);
-      const trustPrompt = createTrustSignalsPrompt(context);
+      const trustPrompt = industryPrompts?.trustSignals
+        ? industryPrompts.trustSignals(context)
+        : createTrustSignalsPrompt(context);
       const trustStart = Date.now();
       const trustResult = await llmProvider.analyze(trustPrompt, config);
       console.log(`[${provider}] ✅ Step 6/8: Trust signals complete (${Date.now() - trustStart}ms, ${trustResult.tokensUsed} tokens, $${(trustResult.cost || 0).toFixed(4)})`);
@@ -339,7 +358,9 @@ export class BrandAnalyzer {
       // 7. Messaging Analysis
       console.log(`[${provider}] ⏱️  Step 7/8: Starting messaging quality analysis...`);
       await this.updateProgress(projectId, `${provider}: Analyzing Messaging Quality (7/8)`, 80);
-      const messagingPrompt = createMessagingAnalysisPrompt(context);
+      const messagingPrompt = industryPrompts?.messagingAnalysis
+        ? industryPrompts.messagingAnalysis(context)
+        : createMessagingAnalysisPrompt(context);
       const messagingStart = Date.now();
       const messagingResult = await llmProvider.analyze(messagingPrompt, config);
       console.log(`[${provider}] ✅ Step 7/8: Messaging analysis complete (${Date.now() - messagingStart}ms, ${messagingResult.tokensUsed} tokens, $${(messagingResult.cost || 0).toFixed(4)})`);
@@ -381,12 +402,15 @@ export class BrandAnalyzer {
       // 8. Recommendations
       console.log(`[${provider}] ⏱️  Step 8/8: Starting recommendations generation...`);
       await this.updateProgress(projectId, `${provider}: Generating Recommendations (8/8)`, 90);
-      const recommendationsPrompt = createRecommendationsPrompt(context, {
+      const existingAnalysis = {
         synopsis: synopsisResult.content,
         pillars: pillars,
         tone: toneResult.content,
         messaging: messagingResult.content,
-      });
+      };
+      const recommendationsPrompt = industryPrompts?.recommendations
+        ? industryPrompts.recommendations(context, existingAnalysis)
+        : createRecommendationsPrompt(context, existingAnalysis);
       const recommendationsStart = Date.now();
       const recommendationsResult = await llmProvider.analyze(recommendationsPrompt, config);
       console.log(`[${provider}] ✅ Step 8/8: Recommendations complete (${Date.now() - recommendationsStart}ms, ${recommendationsResult.tokensUsed} tokens, $${(recommendationsResult.cost || 0).toFixed(4)})`);
