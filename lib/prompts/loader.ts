@@ -104,7 +104,7 @@ export const INDUSTRY_CONFIG: Record<Industry, {
  */
 export function getEnabledIndustries(): Array<{ value: Industry; label: string; description: string }> {
   return Object.entries(INDUSTRY_CONFIG)
-    .filter(([_, config]) => config.enabled)
+    .filter(([, config]) => config.enabled)
     .map(([industry, config]) => ({
       value: industry as Industry,
       label: config.label,
@@ -142,9 +142,9 @@ export async function loadIndustryPrompts(industry: Industry): Promise<IndustryP
 
   // Try to dynamically import industry-specific module
   try {
-    const module = await import(`./industry/${industry.toLowerCase().replace(/_/g, '-')}`);
-    return module.prompts as IndustryPromptOverrides;
-  } catch (error) {
+    const industryModule = await import(`./industry/${industry.toLowerCase().replace(/_/g, '-')}`);
+    return industryModule.prompts as IndustryPromptOverrides;
+  } catch {
     // No industry-specific prompts found, will use generic
     return null;
   }
