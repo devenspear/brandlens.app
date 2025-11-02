@@ -2,6 +2,7 @@ import { LlmProvider, ProjectStatus } from '@prisma/client';
 import { prisma } from '../prisma/client';
 import { LLMProviderFactory } from './llm-providers';
 import { webScraper } from './scraper';
+import { puppeteerScraper } from './puppeteer-scraper';
 import { reportGenerator } from './report-generator';
 import {
   createBrandSynopsisPrompt,
@@ -51,19 +52,42 @@ export class BrandAnalyzer {
         throw new Error('Project not found');
       }
 
-      // Step 1: Scrape website
-      await this.updateProgress(projectId, `Scraping ${project.url}...`, 5);
-      console.log(`\n🌐 SCRAPING: ${project.url}`);
+      // Step 1: Scrape website with Puppeteer (JavaScript execution + screenshots)
+      await this.updateProgress(projectId, `Scraping ${project.url} (enhanced mode)...`, 5);
+      console.log(`\n🌐 SCRAPING WITH PUPPETEER: ${project.url}`);
       const scrapeStart = Date.now();
-      const scrapeResult = await webScraper.scrapeWebsite(project.url);
+
+      let scrapeResult;
+      try {
+        // Try Puppeteer first for best quality (JS execution + screenshots)
+        scrapeResult = await puppeteerScraper.scrapeWebsite(project.url);
+        console.log(`✅ PUPPETEER SCRAPING COMPLETE: ${Date.now() - scrapeStart}ms`);
+      } catch (puppeteerError) {
+        console.warn(`⚠️  Puppeteer failed, falling back to basic scraper:`, puppeteerError);
+        // Fallback to basic scraper if Puppeteer fails
+        scrapeResult = await webScraper.scrapeWebsite(project.url);
+        console.log(`✅ BASIC SCRAPING COMPLETE: ${Date.now() - scrapeStart}ms`);
+      }
+
       const totalPages = scrapeResult.subPages.length + 1;
-      console.log(`✅ SCRAPING COMPLETE: ${Date.now() - scrapeStart}ms | ${totalPages} page(s) scraped`);
+      console.log(`📄 Total pages: ${totalPages}`);
 
       // Check for critical errors (main page failed)
       if (scrapeResult.error) {
         console.error(`❌ SCRAPING FAILED: ${scrapeResult.error}`);
         throw new Error(`Scraping failed: ${scrapeResult.error}`);
       }
+
+      // Validate content quality before proceeding
+      const contentLength = scrapeResult.mainPage.content.length;
+      const MIN_CONTENT_FOR_ANALYSIS = 500;
+
+      if (contentLength < MIN_CONTENT_FOR_ANALYSIS) {
+        console.error(`❌ CONTENT TOO SHORT: ${contentLength} chars (need ${MIN_CONTENT_FOR_ANALYSIS})`);
+        throw new Error(`Website content too short for analysis: ${contentLength} characters. Need at least ${MIN_CONTENT_FOR_ANALYSIS} characters.`);
+      }
+
+      console.log(`✅ CONTENT VALIDATION PASSED: ${contentLength} chars`);
 
       // Log warnings for partial results
       if (scrapeResult.warning) {
@@ -127,8 +151,15 @@ export class BrandAnalyzer {
       const successful = results.filter(r => r.status === 'fulfilled').length;
       const failed = results.filter(r => r.status === 'rejected').length;
 
+      // CRITICAL: Ensure at least one LLM succeeded before generating report
       if (successful === 0) {
-        throw new Error(`All ${providers.length} LLM providers failed`);
+        console.error(`❌ ALL ${providers.length} LLM PROVIDERS FAILED`);
+        results.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            console.error(`   ❌ ${providers[index]}: ${result.reason}`);
+          }
+        });
+        throw new Error(`All ${providers.length} LLM providers failed to analyze the content. This usually means the scraped content was insufficient or malformed. Please try a different website or contact support.`);
       }
 
       if (failed > 0) {
