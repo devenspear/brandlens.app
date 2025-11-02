@@ -12,6 +12,8 @@ import PositioningGrid from './components/PositioningGrid';
 import MessagingScores from './components/MessagingScores';
 import HumanVLLMComparison from './components/HumanVLLMComparison';
 import Recommendations from './components/Recommendations';
+import ReportDashboard from './components/ReportDashboard';
+import PrintStyles from './components/PrintStyles';
 
 interface ReportPageProps {
   params: { token: string };
@@ -25,26 +27,56 @@ const ReportPage: FC<ReportPageProps> = async ({ params }) => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <main className="container mx-auto px-4 py-8">
-        <ReportHeader report={report} />
+    <PrintStyles>
+      <div className="min-h-screen bg-white print:bg-white">
+        <main className="max-w-7xl mx-auto px-6 py-10 print:px-0 print:py-0">
+        {/* Report Header */}
+        <div className="avoid-break">
+          <ReportHeader report={report} />
+        </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
-          <div className="lg:col-span-2 space-y-8">
-            <ExecutiveSummary summary={report.executiveSummary} />
-            <ModelPerspectives perspectives={report.modelPerspectives} />
+        {/* Executive Dashboard - Key Metrics */}
+        <div className="avoid-break mt-10">
+          <ReportDashboard report={report} />
+        </div>
+
+        {/* Executive Summary & Top Actions */}
+        <div className="page-break mt-12 avoid-break">
+          <ExecutiveSummary summary={report.executiveSummary} />
+        </div>
+
+        {/* Model Perspectives - Always show all 3 */}
+        <div className="page-break mt-12 avoid-break">
+          <ModelPerspectives perspectives={report.modelPerspectives} />
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="mt-12 space-y-12">
+          <div className="avoid-break">
             <ConsensusAnalysis consensus={report.consensus} />
-            <PositioningGrid positioning={report.positioning} />
-            <MessagingScores scores={report.messaging} />
-            {report.humanVLLM && <HumanVLLMComparison comparison={report.humanVLLM} />}
           </div>
 
-          <div className="lg:col-span-1 space-y-8">
+          <div className="avoid-break">
+            <PositioningGrid positioning={report.positioning} />
+          </div>
+
+          <div className="avoid-break">
+            <MessagingScores scores={report.messaging} />
+          </div>
+
+          {report.humanVLLM && (
+            <div className="avoid-break">
+              <HumanVLLMComparison comparison={report.humanVLLM} />
+            </div>
+          )}
+
+          <div className="avoid-break">
             <Recommendations recommendations={report.recommendations} />
           </div>
         </div>
       </main>
     </div>
+    </PrintStyles>
   );
 };
 

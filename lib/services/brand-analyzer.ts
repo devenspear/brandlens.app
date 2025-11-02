@@ -186,7 +186,7 @@ export class BrandAnalyzer {
       provider,
       model: this.getDefaultModel(provider),
       temperature: 0.3,
-      maxTokens: provider === LlmProvider.OPENAI ? 8000 : 4000, // Increased for OpenAI reliability
+      maxTokens: 8000, // Increased for all providers to prevent truncation
     };
 
     let llmRun: any;
@@ -194,14 +194,29 @@ export class BrandAnalyzer {
     try {
       const startTime = Date.now();
 
+      // Create initial LLM run record with RUNNING status
+      llmRun = await prisma.llmRun.create({
+        data: {
+          projectId,
+          provider,
+          model: config.model,
+          temperature: config.temperature,
+          maxTokens: config.maxTokens,
+          settings: config as any,
+          rawResponse: {},
+          status: 'RUNNING',
+        },
+      });
+
       // 1. Brand Synopsis
       console.log(`[${provider}] ⏱️  Step 1/8: Starting brand synopsis analysis...`);
+      await this.updateProgress(projectId, `${provider}: Analyzing Brand Synopsis (1/8)`, 20);
       const synopsisPrompt = createBrandSynopsisPrompt(context);
       const synopsisStart = Date.now();
       const synopsisResult = await llmProvider.analyze(synopsisPrompt, config);
       console.log(`[${provider}] ✅ Step 1/8: Brand synopsis complete (${Date.now() - synopsisStart}ms, ${synopsisResult.tokensUsed} tokens, $${(synopsisResult.cost || 0).toFixed(4)})`);
 
-      llmRun = await this.saveLLMRun(projectId, provider, config, synopsisResult);
+      await this.updateLLMRun(llmRun.id, synopsisResult);
       await this.saveFinding(
         projectId,
         llmRun.id,
@@ -213,12 +228,13 @@ export class BrandAnalyzer {
 
       // 2. Positioning Pillars
       console.log(`[${provider}] ⏱️  Step 2/8: Starting positioning pillars analysis...`);
+      await this.updateProgress(projectId, `${provider}: Analyzing Positioning Pillars (2/8)`, 30);
       const pillarsPrompt = createPositioningPillarsPrompt(context);
       const pillarsStart = Date.now();
       const pillarsResult = await llmProvider.analyze(pillarsPrompt, config);
       console.log(`[${provider}] ✅ Step 2/8: Positioning pillars complete (${Date.now() - pillarsStart}ms, ${pillarsResult.tokensUsed} tokens, $${(pillarsResult.cost || 0).toFixed(4)})`);
 
-      llmRun = await this.saveLLMRun(projectId, provider, config, pillarsResult);
+      await this.updateLLMRun(llmRun.id, pillarsResult);
       const pillars = Array.isArray(pillarsResult.content)
         ? pillarsResult.content
         : (pillarsResult.content as any)?.pillars || [];
@@ -229,22 +245,24 @@ export class BrandAnalyzer {
 
       // 3. Tone of Voice
       console.log(`[${provider}] ⏱️  Step 3/8: Starting tone of voice analysis...`);
+      await this.updateProgress(projectId, `${provider}: Analyzing Tone of Voice (3/8)`, 40);
       const tonePrompt = createToneOfVoicePrompt(context);
       const toneStart = Date.now();
       const toneResult = await llmProvider.analyze(tonePrompt, config);
       console.log(`[${provider}] ✅ Step 3/8: Tone of voice complete (${Date.now() - toneStart}ms, ${toneResult.tokensUsed} tokens, $${(toneResult.cost || 0).toFixed(4)})`);
 
-      llmRun = await this.saveLLMRun(projectId, provider, config, toneResult);
+      await this.updateLLMRun(llmRun.id, toneResult);
       await this.saveFinding(projectId, llmRun.id, provider, 'TONE_OF_VOICE', toneResult.content, tonePrompt);
 
       // 4. Buyer Segments
       console.log(`[${provider}] ⏱️  Step 4/8: Starting buyer segments analysis...`);
+      await this.updateProgress(projectId, `${provider}: Analyzing Buyer Segments (4/8)`, 50);
       const segmentsPrompt = createBuyerSegmentsPrompt(context);
       const segmentsStart = Date.now();
       const segmentsResult = await llmProvider.analyze(segmentsPrompt, config);
       console.log(`[${provider}] ✅ Step 4/8: Buyer segments complete (${Date.now() - segmentsStart}ms, ${segmentsResult.tokensUsed} tokens, $${(segmentsResult.cost || 0).toFixed(4)})`);
 
-      llmRun = await this.saveLLMRun(projectId, provider, config, segmentsResult);
+      await this.updateLLMRun(llmRun.id, segmentsResult);
       const segments = Array.isArray(segmentsResult.content)
         ? segmentsResult.content
         : (segmentsResult.content as any)?.segments || [];
@@ -255,12 +273,13 @@ export class BrandAnalyzer {
 
       // 5. Amenities
       console.log(`[${provider}] ⏱️  Step 5/8: Starting amenity claims extraction...`);
+      await this.updateProgress(projectId, `${provider}: Extracting Amenity Claims (5/8)`, 60);
       const amenitiesPrompt = createAmenitiesPrompt(context);
       const amenitiesStart = Date.now();
       const amenitiesResult = await llmProvider.analyze(amenitiesPrompt, config);
       console.log(`[${provider}] ✅ Step 5/8: Amenity claims complete (${Date.now() - amenitiesStart}ms, ${amenitiesResult.tokensUsed} tokens, $${(amenitiesResult.cost || 0).toFixed(4)})`);
 
-      llmRun = await this.saveLLMRun(projectId, provider, config, amenitiesResult);
+      await this.updateLLMRun(llmRun.id, amenitiesResult);
       const amenities = Array.isArray(amenitiesResult.content)
         ? amenitiesResult.content
         : (amenitiesResult.content as any)?.amenities || [];
@@ -271,12 +290,13 @@ export class BrandAnalyzer {
 
       // 6. Trust Signals
       console.log(`[${provider}] ⏱️  Step 6/8: Starting trust signals analysis...`);
+      await this.updateProgress(projectId, `${provider}: Analyzing Trust Signals (6/8)`, 70);
       const trustPrompt = createTrustSignalsPrompt(context);
       const trustStart = Date.now();
       const trustResult = await llmProvider.analyze(trustPrompt, config);
       console.log(`[${provider}] ✅ Step 6/8: Trust signals complete (${Date.now() - trustStart}ms, ${trustResult.tokensUsed} tokens, $${(trustResult.cost || 0).toFixed(4)})`);
 
-      llmRun = await this.saveLLMRun(projectId, provider, config, trustResult);
+      await this.updateLLMRun(llmRun.id, trustResult);
       const trustSignals = Array.isArray(trustResult.content)
         ? trustResult.content
         : (trustResult.content as any)?.signals || [];
@@ -287,12 +307,13 @@ export class BrandAnalyzer {
 
       // 7. Messaging Analysis
       console.log(`[${provider}] ⏱️  Step 7/8: Starting messaging quality analysis...`);
+      await this.updateProgress(projectId, `${provider}: Analyzing Messaging Quality (7/8)`, 80);
       const messagingPrompt = createMessagingAnalysisPrompt(context);
       const messagingStart = Date.now();
       const messagingResult = await llmProvider.analyze(messagingPrompt, config);
       console.log(`[${provider}] ✅ Step 7/8: Messaging analysis complete (${Date.now() - messagingStart}ms, ${messagingResult.tokensUsed} tokens, $${(messagingResult.cost || 0).toFixed(4)})`);
 
-      llmRun = await this.saveLLMRun(projectId, provider, config, messagingResult);
+      await this.updateLLMRun(llmRun.id, messagingResult);
       await this.saveFinding(
         projectId,
         llmRun.id,
@@ -328,6 +349,7 @@ export class BrandAnalyzer {
 
       // 8. Recommendations
       console.log(`[${provider}] ⏱️  Step 8/8: Starting recommendations generation...`);
+      await this.updateProgress(projectId, `${provider}: Generating Recommendations (8/8)`, 90);
       const recommendationsPrompt = createRecommendationsPrompt(context, {
         synopsis: synopsisResult.content,
         pillars: pillars,
@@ -338,7 +360,7 @@ export class BrandAnalyzer {
       const recommendationsResult = await llmProvider.analyze(recommendationsPrompt, config);
       console.log(`[${provider}] ✅ Step 8/8: Recommendations complete (${Date.now() - recommendationsStart}ms, ${recommendationsResult.tokensUsed} tokens, $${(recommendationsResult.cost || 0).toFixed(4)})`);
 
-      llmRun = await this.saveLLMRun(projectId, provider, config, recommendationsResult);
+      await this.updateLLMRun(llmRun.id, recommendationsResult);
       const recommendations = Array.isArray(recommendationsResult.content)
         ? recommendationsResult.content
         : (recommendationsResult.content as any)?.recommendations || [];
@@ -354,6 +376,16 @@ export class BrandAnalyzer {
       const totalCost = (synopsisResult.cost || 0) + (pillarsResult.cost || 0) + (toneResult.cost || 0) +
                        (segmentsResult.cost || 0) + (amenitiesResult.cost || 0) + (trustResult.cost || 0) +
                        (messagingResult.cost || 0) + (recommendationsResult.cost || 0);
+
+      // Mark LLM run as COMPLETED
+      await prisma.llmRun.update({
+        where: { id: llmRun.id },
+        data: {
+          status: 'COMPLETED',
+          tokensUsed: totalTokens,
+          cost: totalCost,
+        },
+      });
 
       console.log(`[${provider}] 🎉 COMPLETE: All 8 analyses done in ${totalTime}ms | ${totalTokens} total tokens | $${totalCost.toFixed(4)} total cost`);
     } catch (error) {
@@ -389,7 +421,27 @@ export class BrandAnalyzer {
   }
 
   /**
-   * Save LLM run to database
+   * Update LLM run with latest result data
+   */
+  private async updateLLMRun(
+    llmRunId: string,
+    result: any
+  ): Promise<void> {
+    // Serialize raw response to remove function objects
+    const serializedRaw = JSON.parse(JSON.stringify(result.raw));
+
+    await prisma.llmRun.update({
+      where: { id: llmRunId },
+      data: {
+        rawResponse: serializedRaw,
+        tokensUsed: result.tokensUsed,
+        cost: result.cost,
+      },
+    });
+  }
+
+  /**
+   * Save LLM run to database (legacy - kept for compatibility)
    */
   private async saveLLMRun(
     projectId: string,

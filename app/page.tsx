@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
+import { ProgressTracker } from '@/components/analysis/ProgressTracker';
 
 export default function Home() {
   const router = useRouter();
@@ -12,6 +13,8 @@ export default function Home() {
   const [humanBrandStatement, setHumanBrandStatement] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [projectId, setProjectId] = useState<string | null>(null);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,11 +45,20 @@ export default function Home() {
       }
 
       const project = await response.json();
-      router.push(`/project/${project.id}`);
+
+      // Instead of redirecting, show progress inline
+      setProjectId(project.id);
+      setAnalyzing(true);
+      setLoading(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
       setLoading(false);
     }
+  };
+
+  const handleAnalysisComplete = (reportUrl: string) => {
+    // Redirect to report when analysis is complete
+    router.push(reportUrl);
   };
 
   return (
@@ -71,9 +83,12 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Main Form */}
+        {/* Main Form or Progress Tracker */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 mb-12">
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {analyzing && projectId ? (
+            <ProgressTracker projectId={projectId} onComplete={handleAnalysisComplete} />
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label
                 htmlFor="url"
@@ -161,13 +176,16 @@ export default function Home() {
               disabled={loading || !url || !email}
               className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold py-4 rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
             >
-              {loading ? 'Analyzing...' : 'Generate Your AI Brand Read'}
+              {loading ? 'Starting analysis...' : 'Generate Your AI Brand Read'}
             </button>
           </form>
+          )}
 
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-4 text-center">
-            Public content only. Analysis typically takes 2-5 minutes.
-          </p>
+          {!analyzing && (
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-4 text-center">
+              Public content only. Analysis typically takes 2-5 minutes.
+            </p>
+          )}
         </div>
 
         {/* Features */}
