@@ -132,6 +132,118 @@ model Report {
   @@index([urlToken])
 }
 
+// New models for training data and benchmarking
+
+model IndustryBenchmark {
+  id                      String   @id @default(cuid())
+  industry                Industry
+  metric                  String   // e.g., "clarity_score", "trust_score", "overall_strength"
+
+  // Statistical data
+  average                 Float
+  median                  Float
+  percentile25            Float
+  percentile75            Float
+  percentile90            Float
+  standardDeviation       Float?
+
+  // Sample data
+  sampleSize              Int
+  minValue                Float
+  maxValue                Float
+
+  // Metadata
+  calculatedAt            DateTime @default(now())
+  dataSourcePeriodStart   DateTime?
+  dataSourcePeriodEnd     DateTime?
+  notes                   String?  @db.Text
+
+  @@unique([industry, metric, calculatedAt])
+  @@index([industry])
+  @@index([metric])
+}
+
+model BrandComparison {
+  id                String   @id @default(cuid())
+
+  // Primary brand
+  primaryProjectId  String
+  primaryUrl        String
+  primaryIndustry   Industry
+
+  // Comparison brand (if any)
+  compareProjectId  String?
+  compareUrl        String?
+
+  // Comparison metrics (JSON for flexibility)
+  comparisonData    Json     // Stores scores, deltas, insights
+
+  // Categorization
+  comparisonType    ComparisonType @default(SIMILAR_INDUSTRY)
+  tags              String[] // e.g., ["luxury", "coastal", "active-adult"]
+
+  // Metadata
+  createdAt         DateTime @default(now())
+  notes             String?  @db.Text
+
+  @@index([primaryProjectId])
+  @@index([compareProjectId])
+  @@index([primaryIndustry])
+  @@index([comparisonType])
+}
+
+model TrainingDataset {
+  id                String   @id @default(cuid())
+  projectId         String   @unique
+
+  // Classification
+  industry          Industry
+  qualityRating     Int?     // 1-5 rating for data quality
+  isReferenceExample Boolean @default(false) // Mark as exemplary
+  isBenchmark       Boolean  @default(false) // Use for industry benchmarks
+
+  // Tags for categorization
+  brandTags         String[] // e.g., ["luxury", "budget", "urban", "suburban"]
+  characteristics   String[] // e.g., ["high-clarity", "strong-differentiation"]
+
+  // Metadata
+  addedAt           DateTime @default(now())
+  reviewedAt        DateTime?
+  reviewedBy        String?
+  notes             String?  @db.Text
+
+  @@index([industry])
+  @@index([isReferenceExample])
+  @@index([isBenchmark])
+  @@index([qualityRating])
+}
+
+model BrandInsight {
+  id                String   @id @default(cuid())
+
+  // Source
+  projectId         String
+  industry          Industry
+
+  // Insight data
+  insightType       InsightType
+  title             String
+  description       String   @db.Text
+  data              Json     // Flexible storage for insight-specific data
+
+  // Context
+  confidence        Float?   // 0-1 confidence score
+  basedOnSample     Int?     // Number of projects this insight is based on
+
+  // Metadata
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([industry])
+  @@index([insightType])
+}
+
 enum ProjectStatus {
   PENDING
   SCRAPING
@@ -199,4 +311,21 @@ enum Industry {
   SENIOR_LIVING
   MULTIFAMILY
   OTHER                      // Legacy - kept for backward compatibility
+}
+
+enum ComparisonType {
+  SIMILAR_INDUSTRY    // Same industry comparison
+  CROSS_INDUSTRY      // Different industry comparison
+  HISTORICAL          // Same brand over time
+  COMPETITIVE         // Direct competitors
+  ASPIRATIONAL        // Benchmark against top performers
+}
+
+enum InsightType {
+  INDUSTRY_TREND      // Patterns across industry
+  IMPROVEMENT_OPPORTUNITY // Specific improvement identified
+  COMPETITIVE_ADVANTAGE   // Strength vs competitors
+  BEST_PRACTICE      // Exemplary approach
+  COMMON_MISTAKE     // Frequently seen issue
+  EMERGING_PATTERN   // New trend detected
 }
