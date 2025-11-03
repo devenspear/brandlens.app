@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth/helpers';
-import { prisma } from '@/lib/db';
+import { prisma } from '@/lib/prisma/client';
 import { LlmProvider } from '@prisma/client';
 
 export async function GET() {
