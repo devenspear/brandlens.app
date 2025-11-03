@@ -160,43 +160,40 @@ export default function HomePage() {
               Just enter your website and create your BrandLens account to get started.
             </p>
 
-            {/* Hero Form (conditional) */}
-            {showHeroForm && !analyzing && (
+            {/* Hero Form (conditional) - Only show if not analyzing */}
+            {showHeroForm && (
               <div className="mt-8 mx-auto max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <input
-                    type="text"
-                    value={url}
-                    onChange={(e) => setUrl(e.target.value)}
-                    placeholder="https://yourbrand.com"
-                    required
-                    className="w-full px-6 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-lg placeholder-gray-400 focus:ring-4 focus:ring-blue-500 focus:border-transparent"
-                  />
-                  {error && (
-                    <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-                      <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
-                    </div>
-                  )}
-                  <button
-                    type="submit"
-                    disabled={loading || !url}
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg text-lg"
-                  >
-                    {loading ? 'Starting...' : '→ Generate My Report'}
-                  </button>
-                  {!isSignedIn && (
-                    <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                      You'll be prompted to sign up after clicking the button
-                    </p>
-                  )}
-                </form>
-              </div>
-            )}
-
-            {/* Progress Tracker */}
-            {analyzing && projectId && (
-              <div className="mt-8 mx-auto max-w-2xl bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8">
-                <ProgressTracker projectId={projectId} onComplete={handleAnalysisComplete} />
+                {!analyzing ? (
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <input
+                      type="text"
+                      value={url}
+                      onChange={(e) => setUrl(e.target.value)}
+                      placeholder="https://yourbrand.com"
+                      required
+                      className="w-full px-6 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-lg placeholder-gray-400 focus:ring-4 focus:ring-blue-500 focus:border-transparent"
+                    />
+                    {error && (
+                      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+                      </div>
+                    )}
+                    <button
+                      type="submit"
+                      disabled={loading || !url}
+                      className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg text-lg"
+                    >
+                      {loading ? 'Starting...' : '→ Generate My Report'}
+                    </button>
+                    {!isSignedIn && (
+                      <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+                        You'll be prompted to sign up after clicking the button
+                      </p>
+                    )}
+                  </form>
+                ) : projectId && (
+                  <ProgressTracker projectId={projectId} onComplete={handleAnalysisComplete} />
+                )}
               </div>
             )}
           </div>
@@ -230,12 +227,12 @@ export default function HomePage() {
             Experience the Power of AI Perception in 60 Seconds
           </h2>
 
-          <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-4 border-blue-600 dark:border-blue-400 rounded-2xl p-10 mb-12">
-            <h3 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">
-              Run a Free AI Perception Test
-            </h3>
+          {!analyzing ? (
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-4 border-blue-600 dark:border-blue-400 rounded-2xl p-10 mb-12">
+              <h3 className="text-2xl font-bold text-center text-gray-900 dark:text-white mb-6">
+                Run a Free AI Perception Test
+              </h3>
 
-            {!analyzing ? (
               <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl mx-auto">
                 <div>
                   <input
@@ -269,12 +266,17 @@ export default function HomePage() {
                     : "You'll sign up after clicking - no credit card required."}
                 </p>
               </form>
-            ) : (
-              <div className="max-w-2xl mx-auto">
-                <ProgressTracker projectId={projectId!} onComplete={handleAnalysisComplete} />
-              </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
+                🔬 Analysis in Progress
+              </p>
+              <p className="text-gray-600 dark:text-gray-400">
+                Scroll up to see live progress, or we'll email you when it's ready
+              </p>
+            </div>
+          )}
         </div>
       </section>
 

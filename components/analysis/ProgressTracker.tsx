@@ -44,6 +44,7 @@ export function ProgressTracker({ projectId, onComplete }: ProgressTrackerProps)
 
   useEffect(() => {
     const eventSource = new EventSource(`/api/projects/${projectId}/stream`);
+    let isCompleted = false;
 
     eventSource.onmessage = (event) => {
       try {
@@ -63,6 +64,7 @@ export function ProgressTracker({ projectId, onComplete }: ProgressTrackerProps)
 
         // If completed, trigger callback
         if (data.status === 'COMPLETED' && data.reportUrl && onComplete) {
+          isCompleted = true;
           setTimeout(() => {
             eventSource.close();
             onComplete(data.reportUrl);
@@ -80,7 +82,11 @@ export function ProgressTracker({ projectId, onComplete }: ProgressTrackerProps)
     };
 
     eventSource.onerror = () => {
-      setError('Connection lost. Please refresh the page.');
+      // Only show error if the analysis didn't complete successfully
+      // SSE streams naturally close when complete, which triggers onerror
+      if (!isCompleted) {
+        setError('Connection lost. Please refresh the page.');
+      }
       eventSource.close();
     };
 
