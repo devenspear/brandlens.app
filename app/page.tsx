@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useUser, UserButton } from '@clerk/nextjs';
 import { ThemeToggle } from '@/components/shared/theme-toggle';
 import { ProgressTracker } from '@/components/analysis/ProgressTracker';
 import { getVersionString } from '@/lib/utils/version';
@@ -10,8 +11,9 @@ import { getAllIndustries } from '@/lib/prompts/loader';
 
 export default function HomePage() {
   const router = useRouter();
+  const { isSignedIn, user } = useUser();
+
   const [url, setUrl] = useState('');
-  const [email, setEmail] = useState('');
   const [industry, setIndustry] = useState<Industry>(Industry.RESIDENTIAL_REAL_ESTATE);
   const [region, setRegion] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,12 +24,53 @@ export default function HomePage() {
 
   const industries = getAllIndustries();
 
+  // Handle pending analysis after sign-up
+  useEffect(() => {
+    if (isSignedIn && user) {
+      const pendingUrl = sessionStorage.getItem('pendingAnalysisUrl');
+      const pendingIndustry = sessionStorage.getItem('pendingAnalysisIndustry');
+      const pendingRegion = sessionStorage.getItem('pendingAnalysisRegion');
+
+      if (pendingUrl && pendingIndustry) {
+        // Restore form values
+        setUrl(pendingUrl);
+        setIndustry(pendingIndustry as Industry);
+        if (pendingRegion) setRegion(pendingRegion);
+
+        // Clear session storage
+        sessionStorage.removeItem('pendingAnalysisUrl');
+        sessionStorage.removeItem('pendingAnalysisIndustry');
+        sessionStorage.removeItem('pendingAnalysisRegion');
+
+        // Auto-submit the form
+        setTimeout(() => {
+          const form = document.querySelector('form');
+          if (form) {
+            form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+          }
+        }, 500);
+      }
+    }
+  }, [isSignedIn, user]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
+      // Check if user is signed in
+      if (!isSignedIn) {
+        // Store URL in session storage for after sign-up
+        sessionStorage.setItem('pendingAnalysisUrl', url);
+        sessionStorage.setItem('pendingAnalysisIndustry', industry);
+        if (region) sessionStorage.setItem('pendingAnalysisRegion', region);
+
+        // Redirect to sign-up
+        router.push('/sign-up');
+        return;
+      }
+
       let normalizedUrl = url.trim();
       if (!/^https?:\/\//i.test(normalizedUrl)) {
         normalizedUrl = `https://${normalizedUrl}`;
@@ -38,7 +81,7 @@ export default function HomePage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: normalizedUrl,
-          email,
+          email: user?.primaryEmailAddress?.emailAddress || '',
           industry,
           region: region || undefined
         }),
@@ -65,8 +108,19 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
-      {/* Theme Toggle */}
-      <div className="fixed top-4 right-4 z-50">
+      {/* Theme Toggle & User Button */}
+      <div className="fixed top-4 right-4 z-50 flex items-center gap-4">
+        {isSignedIn && (
+          <>
+            <a
+              href="/dashboard"
+              className="px-4 py-2 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-lg transition font-medium"
+            >
+              Dashboard
+            </a>
+            <UserButton afterSignOutUrl="/" />
+          </>
+        )}
         <ThemeToggle />
       </div>
 
@@ -118,14 +172,6 @@ export default function HomePage() {
                     required
                     className="w-full px-6 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-lg placeholder-gray-400 focus:ring-4 focus:ring-blue-500 focus:border-transparent"
                   />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    required
-                    className="w-full px-6 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-lg placeholder-gray-400 focus:ring-4 focus:ring-blue-500 focus:border-transparent"
-                  />
                   {error && (
                     <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                       <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -133,11 +179,16 @@ export default function HomePage() {
                   )}
                   <button
                     type="submit"
-                    disabled={loading || !url || !email}
+                    disabled={loading || !url}
                     className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-4 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg text-lg"
                   >
                     {loading ? 'Starting...' : '→ Generate My Report'}
                   </button>
+                  {!isSignedIn && (
+                    <p className="text-center text-sm text-gray-600 dark:text-gray-400">
+                      You'll be prompted to sign up after clicking the button
+                    </p>
+                  )}
                 </form>
               </div>
             )}
@@ -197,17 +248,6 @@ export default function HomePage() {
                   />
                 </div>
 
-                <div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="your@email.com"
-                    required
-                    className="w-full px-6 py-4 rounded-xl border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-lg placeholder-gray-400 focus:ring-4 focus:ring-blue-500"
-                  />
-                </div>
-
                 {error && (
                   <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
                     <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
@@ -216,7 +256,7 @@ export default function HomePage() {
 
                 <button
                   type="submit"
-                  disabled={loading || !url || !email}
+                  disabled={loading || !url}
                   className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-5 rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all disabled:opacity-50 text-xl shadow-xl flex items-center justify-center gap-2"
                 >
                   <span>🔍</span>
@@ -224,7 +264,9 @@ export default function HomePage() {
                 </button>
 
                 <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                  No credit card required. You'll see your AI consensus and top-5 actions instantly.
+                  {isSignedIn
+                    ? "No credit card required. You'll see your AI consensus and top-5 actions instantly."
+                    : "You'll sign up after clicking - no credit card required."}
                 </p>
               </form>
             ) : (

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/auth/helpers';
 import { benchmarkService } from '@/lib/services/benchmark-service';
 import { Industry } from '@prisma/client';
 
@@ -15,6 +16,12 @@ import { Industry } from '@prisma/client';
  */
 export async function POST(request: NextRequest) {
   try {
+    // Require admin access
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) {
+      return authResult;
+    }
+
     const body = await request.json();
     const { action, industry, metrics, projectId } = body;
 
@@ -107,6 +114,12 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
   try {
+    // Require admin access
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) {
+      return authResult;
+    }
+
     const { searchParams } = new URL(request.url);
     const industry = searchParams.get('industry') as Industry;
     const metric = searchParams.get('metric');

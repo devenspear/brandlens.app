@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/auth/helpers';
 import { prisma } from '@/lib/prisma/client';
 
 export async function GET() {
   try {
+    // Require admin access
+    const authResult = await requireAdmin();
+    if (authResult instanceof NextResponse) {
+      return authResult;
+    }
+
     const startTime = Date.now();
 
     // Test database connection

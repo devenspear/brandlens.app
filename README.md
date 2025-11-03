@@ -63,6 +63,16 @@ OPENAI_API_KEY="sk-..."
 ANTHROPIC_API_KEY="sk-ant-..."
 GOOGLE_AI_API_KEY="..."
 
+# Clerk Authentication (https://clerk.com)
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY="pk_test_..."
+CLERK_SECRET_KEY="sk_test_..."
+NEXT_PUBLIC_CLERK_SIGN_IN_URL="/sign-in"
+NEXT_PUBLIC_CLERK_SIGN_UP_URL="/sign-up"
+
+# Resend Email Service (https://resend.com)
+RESEND_API_KEY="re_..."
+RESEND_FROM_EMAIL="BrandLens <reports@yourdomain.com>"
+
 # Application
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 NODE_ENV="development"
@@ -152,6 +162,8 @@ brandlens.app/
 
 - **Frontend**: Next.js 15.5.4 (Turbopack), TypeScript 5, Tailwind CSS 4, Framer Motion
 - **Backend**: Node.js, Prisma ORM 6.18, PostgreSQL (Neon)
+- **Authentication**: Clerk (JWT-based, OAuth ready)
+- **Email**: Resend (transactional emails, SPF/DKIM/DMARC verified)
 - **AI Models**: OpenAI GPT-4o, Anthropic Claude Sonnet 4.5, Google Gemini 2.5 Pro
 - **Web Scraping**: Puppeteer (with @sparticuz/chromium for Vercel), Cheerio
 - **Deployment**: Vercel (serverless functions, AWS Lambda)
@@ -170,6 +182,8 @@ brandlens.app/
 ## 📝 Project Status & Development Phases
 
 ### ✅ Phase 1: Provider Tagging & Core Reliability (COMPLETED & DEPLOYED)
+
+### ✅ Phase 1.5: Authentication & Email Infrastructure (COMPLETED & DEPLOYED)
 
 **Status:** 🟢 **LIVE IN PRODUCTION** at [brandlens.app](https://brandlens.app)
 
@@ -283,7 +297,88 @@ All three LLMs receive the **same industry-specific prompt** to enable fair comp
 
 ---
 
-### 🔮 Phase 3: Admin Dashboard (PLANNED)
+### ✅ Phase 1.5: Authentication & Email Infrastructure (COMPLETED & DEPLOYED)
+
+**Status:** 🟢 **LIVE IN PRODUCTION**
+
+**Major Implementations:**
+
+1. **Clerk Authentication System** (`CLERK_SETUP.md`, `CLERK_INTEGRATION_SUMMARY.md`):
+   - ✅ User signup/signin with email verification
+   - ✅ Seamless authentication flow (auto-submit after signup)
+   - ✅ User dashboard at `/dashboard` with project management
+   - ✅ Session management with secure cookies
+   - ✅ Role-based access control (Admin roles)
+   - ✅ Ownership verification for all user resources
+   - ✅ Middleware protection for sensitive routes
+   - ✅ Consistent error handling across all endpoints
+
+2. **Auth Helper Functions** (`/lib/auth/helpers.ts`):
+   - ✅ `requireAuth()` - Ensures user is authenticated
+   - ✅ `requireAdmin()` - Ensures user has admin role
+   - ✅ `verifyOwnership()` - Checks resource ownership
+   - ✅ `getOptionalAuth()` - Optional auth for public/private routes
+   - ✅ All API routes refactored to use standardized helpers
+
+3. **Resend Email Service** (`/lib/email/resend.ts`, `RESEND_DNS_SETUP.md`):
+   - ✅ Professional branded HTML email templates
+   - ✅ Report delivery via email at `/api/reports/email`
+   - ✅ Welcome emails for new users
+   - ✅ DNS records configured (SPF, DKIM, DMARC)
+   - ✅ Domain verified: `reports@brandlens.app`
+   - ✅ Error handling and delivery verification
+
+4. **User Dashboard** (`/app/dashboard/page.tsx`):
+   - ✅ Project list with status tracking
+   - ✅ Stats cards (total, completed, in-progress)
+   - ✅ Direct links to reports
+   - ✅ Account information display
+   - ✅ Dark mode support
+
+5. **Admin Dashboard** (`/app/admin/**`):
+   - ✅ Password protection: `ADMINp@ss2025`
+   - ✅ System monitoring and analytics
+   - ✅ LLM provider performance metrics
+   - ✅ User analytics (email domains, usage patterns)
+   - ✅ Recent projects viewer
+   - ✅ Real-time data updates (5s refresh)
+
+6. **Route Protection Strategy**:
+   - **Public Routes**: `/`, `/sign-in`, `/sign-up`, `/report/[token]`
+   - **User Routes** (Auth Required): `/dashboard`, `/api/user/*`, `/api/projects/*`
+   - **Admin Routes** (Admin Role Required): `/api/admin/*`, `/api/debug/*`
+   - **Password Protected**: `/admin/*` (separate from Clerk, uses session password)
+
+7. **Security Features**:
+   - ✅ Layered security (Middleware → API → Ownership checks)
+   - ✅ JWT-based stateless authentication
+   - ✅ Email domain verification (SPF, DKIM, DMARC)
+   - ✅ Secure session cookies (httpOnly, sameSite)
+   - ✅ No sensitive data in error messages
+   - ✅ Type-safe auth with TypeScript
+   - ✅ Zod validation on all inputs
+
+**Configuration Files:**
+- `CLERK_SETUP.md` - Detailed Clerk setup guide
+- `CLERK_INTEGRATION_SUMMARY.md` - Architecture overview
+- `RESEND_DNS_SETUP.md` - DNS configuration guide
+- `DEPLOYMENT_READY.md` - Production deployment checklist
+- `QUICK_DNS_SETUP.md` - Quick DNS setup steps
+
+**Production Validation:**
+- ✅ DNS records verified in Resend Dashboard
+- ✅ Clerk authentication working in production
+- ✅ User signup flow tested end-to-end
+- ✅ Email delivery confirmed from `reports@brandlens.app`
+- ✅ Admin dashboard accessible with password
+- ✅ All API routes protected appropriately
+- ✅ User dashboard showing projects correctly
+
+**Timeline:** Completed November 2025
+
+---
+
+### 🔮 Phase 3: Admin Dashboard Enhancements (PLANNED)
 
 **Objective:** Centralized control panel for system configuration and monitoring.
 

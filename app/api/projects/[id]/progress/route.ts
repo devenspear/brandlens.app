@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth, verifyOwnership } from '@/lib/auth/helpers';
 import { prisma } from '@/lib/prisma/client';
 
 export async function GET(
@@ -6,6 +7,12 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    // Require authentication
+    const authResult = await requireAuth();
+    if (authResult instanceof NextResponse) {
+      return authResult;
+    }
+
     const { id } = await params;
     const project = await prisma.project.findUnique({
       where: { id },
@@ -14,6 +21,7 @@ export async function GET(
         progressMessage: true,
         progressPercent: true,
         updatedAt: true,
+        createdBy: true,
       },
     });
 
@@ -22,6 +30,12 @@ export async function GET(
         { error: 'Project not found' },
         { status: 404 }
       );
+    }
+
+    // Verify user owns this project
+    const ownershipError = verifyOwnership(authResult, project.createdBy);
+    if (ownershipError) {
+      return ownershipError;
     }
 
     return NextResponse.json({

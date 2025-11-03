@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAuth } from '@/lib/auth/helpers';
 import { prisma } from '@/lib/prisma/client';
 import { brandAnalyzer } from '@/lib/services/brand-analyzer';
 import { apiLogger } from '@/lib/debug/api-logger';
@@ -7,7 +8,7 @@ import { Industry } from '@prisma/client';
 
 const createProjectSchema = z.object({
   url: z.string().url('Invalid URL'),
-  email: z.string().email('Invalid email address'),
+  email: z.string().email('Invalid email address').optional(), // Optional since we get it from Clerk
   industry: z.nativeEnum(Industry).default(Industry.RESIDENTIAL_REAL_ESTATE),
   region: z.string().optional(),
   humanBrandStatement: z.string().optional(),
@@ -18,6 +19,14 @@ export async function POST(request: NextRequest) {
   const logId = apiLogger.logRequest('POST', '/api/projects');
 
   try {
+    // Require authentication
+    const authResult = await requireAuth();
+    if (authResult instanceof NextResponse) {
+      return authResult; // Return error response
+    }
+
+    const { userId, email: userEmail } = authResult;
+
     const body = await request.json();
     console.log('[API] POST /api/projects - Request body:', JSON.stringify(body, null, 2));
 
@@ -41,14 +50,15 @@ export async function POST(request: NextRequest) {
     const project = await prisma.project.create({
       data: {
         url: validated.url,
-        email: validated.email,
+        email: userEmail, // Use Clerk user's email
         industry: validated.industry,
         region: validated.region,
         humanBrandStatement: validated.humanBrandStatement,
         status: 'PENDING',
+        createdBy: userId, // Associate with Clerk user
       },
     });
-    console.log('[API] Project created:', project.id, 'Industry:', validated.industry);
+    console.log('[API] Project created:', project.id, 'Industry:', validated.industry, 'User:', userId);
 
     const duration = Date.now() - startTime;
     apiLogger.logResponse(logId, 200, duration, { id: project.id });

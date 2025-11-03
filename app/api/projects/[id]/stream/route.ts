@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server';
+import { requireAuth, verifyOwnership } from '@/lib/auth/helpers';
 import { prisma } from '@/lib/prisma/client';
 
 export const runtime = 'nodejs';
@@ -8,7 +9,34 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // Require authentication
+  const authResult = await requireAuth();
+  if (authResult instanceof Response) {
+    return authResult;
+  }
+
   const { id } = await params;
+
+  // Verify user owns this project before starting the stream
+  const projectCheck = await prisma.project.findUnique({
+    where: { id },
+    select: { createdBy: true },
+  });
+
+  if (!projectCheck) {
+    return new Response(
+      JSON.stringify({ error: 'Project not found' }),
+      { status: 404, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+
+  const ownershipError = verifyOwnership(authResult, projectCheck.createdBy);
+  if (ownershipError) {
+    return new Response(
+      JSON.stringify({ error: 'Forbidden', message: 'You do not have access to this project' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
 
   // Create a readable stream for Server-Sent Events
   const encoder = new TextEncoder();
